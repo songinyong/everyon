@@ -23,7 +23,7 @@ public class FirebaseConfig {
     public FirebaseApp firebaseApp() throws IOException {
         //log.info("Initializing Firebase.");
         FileInputStream serviceAccount =
-        new FileInputStream("src/main/resources/serviceAccountKey.json");
+        new FileInputStream("./src/main/resources/serviceAccountKey.json");
 
         FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
