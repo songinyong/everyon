@@ -32,7 +32,7 @@ public class CustomUser implements UserDetails {
     private String auth;
 
     @Builder
-    public CustomUser(String platform, String email, String nickname,  String auth) {
+    public CustomUser(String platform, String uid, String nickname,  String auth) {
     }
 
 
