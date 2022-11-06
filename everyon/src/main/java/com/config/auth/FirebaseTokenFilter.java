@@ -12,23 +12,23 @@ import org.apache.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.config.auth.util.RequestUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.service.CustomUserService;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FirebaseTokenFilter extends OncePerRequestFilter{
 
-    private UserDetailsService userDetailsService;
+    private CustomUserService userDetailsService;
     private FirebaseAuth firebaseAuth;
 
-    public FirebaseTokenFilter(UserDetailsService userDetailsService, FirebaseAuth firebaseAuth) {
+    public FirebaseTokenFilter(CustomUserService userDetailsService, FirebaseAuth firebaseAuth) {
         this.userDetailsService = userDetailsService;
         this.firebaseAuth = firebaseAuth;
     }
@@ -41,7 +41,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter{
         try{
             String header = RequestUtil.getAuthorizationToken(request.getHeader("Authorization"));
             decodedToken = firebaseAuth.verifyIdToken(header);
-        } catch (FirebaseAuthException | IllegalArgumentException e) {
+        } catch (NullPointerException | FirebaseAuthException | IllegalArgumentException e) {
             // ErrorMessage 응답 전송
             response.setStatus(HttpStatus.SC_UNAUTHORIZED);
             response.setContentType("application/json");
@@ -52,20 +52,22 @@ public class FirebaseTokenFilter extends OncePerRequestFilter{
         
         // User를 가져와 SecurityContext에 저장한다.
         
-        /*
+        
         try{
-            UserDetails user = userDetailsService.loadUserByUsername(decodedToken.getUid());
+        	System.out.println(decodedToken.getUid());
+            UserDetails user = userDetailsService.loadUserByUserUid(decodedToken.getUid());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     user, null, user.getAuthorities());        
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch(NoSuchElementException e){
+        } catch(NullPointerException | NoSuchElementException e){
             // ErrorMessage 응답 전송
             response.setStatus(HttpStatus.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"code\":\"USER_NOT_FOUND\"}");
             return;
         }
-        */
+        
+        //System.out.println("토큰");
         filterChain.doFilter(request, response);
     }
 }

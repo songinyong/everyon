@@ -14,10 +14,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @Table(name="users")
+@NoArgsConstructor
 public class CustomUser implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

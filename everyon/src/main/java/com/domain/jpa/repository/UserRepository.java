@@ -7,4 +7,6 @@ import com.domain.jpa.CustomUser;
 
 @Repository
 public interface UserRepository extends JpaRepository<CustomUser, String> {
+	
+	public CustomUser findByUid(String uid);
 }

@@ -18,7 +18,6 @@ import com.google.firebase.auth.FirebaseAuth;
 public class FirebaseConfig {
 
 
-    
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
         //log.info("Initializing Firebase.");
@@ -27,7 +26,7 @@ public class FirebaseConfig {
 
         FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-        .setStorageBucket("heroku-sample.appspot.com")
+        //.setStorageBucket("heroku-sample.appspot.com")
         .build();
         
         FirebaseApp app = FirebaseApp.initializeApp(options);

@@ -10,6 +10,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.config.auth.FirebaseTokenFilter;
 import com.google.firebase.auth.FirebaseAuth;
+import com.service.CustomUserService;
 
 import lombok.RequiredArgsConstructor;
 @Configuration
@@ -18,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private CustomUserService userDetailsService;
     
     @Autowired
     private FirebaseAuth firebaseAuth;   
