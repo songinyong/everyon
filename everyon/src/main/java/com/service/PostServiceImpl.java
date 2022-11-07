@@ -45,10 +45,12 @@ public class PostServiceImpl implements PostService {
 	@Transactional
 	public ResponseEntity<JSONObject> createMeeting(CreateMeetDto createMeetDto) {
 		JSONObject resultObj = new JSONObject();  
-	
+		Long meet_id ;
+		
 		try {
-			meetRepo.save(createMeetDto.toEntity());
+			meet_id = meetRepo.save(createMeetDto.toEntity()).getId();
 			resultObj.put("result","true");
+			
 			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.ACCEPTED);
 		}
 		catch(Exception e) {

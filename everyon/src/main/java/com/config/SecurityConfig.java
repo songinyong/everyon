@@ -32,6 +32,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().authorizeRequests()
                 .anyRequest().authenticated().and()
                 .addFilterBefore(new FirebaseTokenFilter(userDetailsService, firebaseAuth),
-                     UsernamePasswordAuthenticationFilter.class);
+                     UsernamePasswordAuthenticationFilter.class); 
+        /*.and()
+        .authorizeRequests().
+        anyRequest().permitAll();*/
 }
 }

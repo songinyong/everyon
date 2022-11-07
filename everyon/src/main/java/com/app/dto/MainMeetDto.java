@@ -12,18 +12,22 @@ public class MainMeetDto {
 
 	private int owner ;
 	private String room_code;
-	private int num_people;
+	private int max_people;
+	private int participant_count;
 	private String main_image;	
 	private String title;
 	private String description ;
+	private String category;
 	
 	public MainMeetDto(Meeting entity) {
 		this.owner = entity.getOwner();
 		this.room_code = entity.getRoom_code();
-		this.num_people = entity.getNum_people();
-		this.main_image = entity.getMain_image();
+		this.max_people = entity.getMax_people();
+		this.participant_count = entity.getParticipant_count();
+		this.main_image = entity.getMain_image_link();
 		this.title = entity.getTitle();
 		this.description = entity.getDescription();
+		this.category = entity.getCategory();
 	}
 	
 }
