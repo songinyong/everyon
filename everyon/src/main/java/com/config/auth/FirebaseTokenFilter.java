@@ -51,14 +51,15 @@ public class FirebaseTokenFilter extends OncePerRequestFilter{
 
         
         // User를 가져와 SecurityContext에 저장한다.
-        
-        
+
         try{
         	
             UserDetails user = userDetailsService.loadUserByUserUid(decodedToken.getUid());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     user, null, user.getAuthorities());        
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+
         } catch(NullPointerException | NoSuchElementException e){
             // ErrorMessage 응답 전송
             response.setStatus(HttpStatus.SC_UNAUTHORIZED);

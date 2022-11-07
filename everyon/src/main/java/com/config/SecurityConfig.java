@@ -2,7 +2,9 @@ package com.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,8 +35,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated().and()
                 .addFilterBefore(new FirebaseTokenFilter(userDetailsService, firebaseAuth),
                      UsernamePasswordAuthenticationFilter.class); 
-        /*.and()
+        /* .and()
         .authorizeRequests().
         anyRequest().permitAll();*/
-}
+    }
+    
+    //토큰 검증에서 제외대상
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        /** 회원가입, 리소스
+         * 회원가입이후에 다른 
+         */
+			web.ignoring().antMatchers(HttpMethod.POST, "/users/register")
+            .antMatchers("/image/**");
+    }
 }

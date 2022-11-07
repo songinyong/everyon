@@ -14,17 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.MainMeetDto;
 import com.domain.jpa.Meeting;
+import com.domain.jpa.Participant;
 import com.domain.jpa.repository.MeetRepository;
+import com.domain.jpa.repository.ParticipantRepository;
 
 @Service
 public class PostServiceImpl implements PostService {
 	
 	
 	private MeetRepository meetRepo ;
+	private ParticipantRepository participantRepo ;
 	
 	@Autowired
 	public void setMeetRepository(MeetRepository meetRepository) {
 	    this.meetRepo = meetRepository;
+	 }
+	
+	@Autowired
+	public void setParticipantRepository(ParticipantRepository participantRepository) {
+	    this.participantRepo = participantRepository;
 	 }
 	
 	 /**
@@ -51,7 +59,11 @@ public class PostServiceImpl implements PostService {
 			meet_id = meetRepo.save(createMeetDto.toEntity()).getId();
 			resultObj.put("result","true");
 			
-			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.ACCEPTED);
+			participantRepo.save(Participant.builder()
+					.user_id((long) createMeetDto.getOwner())
+					.meet_id(meet_id)
+					.build());
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
 		}
 		catch(Exception e) {
     		resultObj.put("result","false");

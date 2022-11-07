@@ -34,7 +34,16 @@ public class CustomUser implements UserDetails {
     private String auth;
 
     @Builder
-    public CustomUser(String platform, String uid, String nickname,  String auth) {
+    public CustomUser(String platform, String uid) {
+    	
+    	String hashCode = String.valueOf(uid.hashCode());
+    	if(hashCode.length() > 10)
+    		hashCode = hashCode.substring(0, 9);
+    	
+    	this.nickname = String.valueOf(hashCode);
+    	this.auth = "USER" ;
+    	this.platform = platform ;
+    	this.uid = uid;
     }
 
 

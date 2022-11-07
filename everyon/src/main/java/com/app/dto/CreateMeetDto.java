@@ -2,6 +2,9 @@ package com.app.dto;
 
 import com.domain.jpa.Meeting;
 
+import lombok.Getter;
+
+@Getter
 public class CreateMeetDto {
 	private int owner ;
 	private String room_code;
