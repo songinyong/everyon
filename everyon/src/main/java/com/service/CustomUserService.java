@@ -58,6 +58,7 @@ public class CustomUserService implements UserDetailsService {
         try{
             
             decodedToken = firebaseAuth.verifyIdToken(RequestUtil.getAuthorizationToken(token));
+            
         } catch (NullPointerException | FirebaseAuthException | IllegalArgumentException e) {
         	
         	

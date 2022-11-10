@@ -16,8 +16,9 @@ public class MainMeetDto {
 	private int participant_count;
 	private String main_image;	
 	private String title;
-	private String description ;
+	
 	private String category;
+	private boolean favorite ;
 	
 	public MainMeetDto(Meeting entity) {
 		this.owner = entity.getOwner();
@@ -26,8 +27,12 @@ public class MainMeetDto {
 		this.participant_count = entity.getParticipant_count();
 		this.main_image = entity.getMain_image_link();
 		this.title = entity.getTitle();
-		this.description = entity.getDescription();
+		this.favorite = false ;
 		this.category = entity.getCategory();
+	}
+	
+	public void setFavorite() {
+		this.favorite = !this.favorite;
 	}
 	
 }

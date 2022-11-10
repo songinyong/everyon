@@ -44,6 +44,8 @@ public class PostServiceImpl implements PostService {
 		 Page<Meeting> meetList = meetRepo.findAll(pageRequest);
 		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
 	
+		 
+		 
     	return dtoList;
     }
 	
@@ -72,4 +74,12 @@ public class PostServiceImpl implements PostService {
 		
 	    }
 	}
+	
+	/**
+	 * 즐겨찾기 추가 삭제
+	 */
+	
+	/**
+	 * 좋아요 추가
+	 */
 }
