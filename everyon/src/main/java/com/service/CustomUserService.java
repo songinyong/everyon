@@ -1,5 +1,7 @@
 package com.service;
 
+import java.util.Optional;
+
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import com.domain.jpa.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.util.CommonUtil;
 
 
 
@@ -26,6 +29,8 @@ public class CustomUserService implements UserDetailsService {
     UserRepository userRepository;
     @Autowired
     private FirebaseAuth firebaseAuth;  
+    @Autowired
+    private CommonUtil commonUtil;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -48,7 +53,9 @@ public class CustomUserService implements UserDetailsService {
         userRepository.save(customUser);
         return customUser;
     }
-    
+    /*
+     * 회원가입
+     * */
     public ResponseEntity<JSONObject> register(String uid, String platform, String token) {
     	
         FirebaseToken decodedToken;
@@ -101,4 +108,28 @@ public class CustomUserService implements UserDetailsService {
 
     	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
     }
+    
+    
+    /**
+     * 유저 프로필 사진 업데이트
+     */
+    public ResponseEntity<JSONObject> uploadImage(String token, String image) {
+    	
+    	JSONObject resultObj = new JSONObject();
+    	
+    	Optional<CustomUser> user = userRepository.findById(commonUtil.getUserId(token));
+    	if(user.isPresent()) {
+    		user.get().setImage(image);
+    		userRepository.save(user.get());
+    		resultObj.put("result", true);
+    	}
+    	else {
+    		resultObj.put("result", false);
+    		resultObj.put("reason", "해당 유저가 존재하지 않습니다");
+    	}
+    	
+    	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+    	
+    }
+   
 }

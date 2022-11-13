@@ -6,15 +6,14 @@ import lombok.Getter;
 
 @Getter
 public class CreateMeetDto {
-	private int owner ;
+	private Long owner ;
 	private String room_code;
 	private int max_people;
 	private String main_image;	
 	private String title;
 	private String description ;
 	
-	public CreateMeetDto(int owner, String room_code, int max_people, String main_image, String title, String description  ) {
-		this.owner = owner;
+	public CreateMeetDto(String room_code, int max_people, String main_image, String title, String description  ) {
 		this.room_code = room_code;
 		this.max_people = max_people;
 		this.main_image = main_image;
@@ -31,5 +30,9 @@ public class CreateMeetDto {
 				.title(title)
 				.description(description)
 				.build();
+	}
+	
+	public void setOwner(Long owner) {
+		this.owner = owner ;
 	}
 }

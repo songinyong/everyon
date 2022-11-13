@@ -32,6 +32,9 @@ public class CustomUser implements UserDetails {
     private String nickname;
     @Column
     private String auth;
+    
+    @Column
+    private String image;
 
     @Builder
     public CustomUser(String platform, String uid) {
@@ -61,6 +64,11 @@ public class CustomUser implements UserDetails {
     @Override
     public String getUsername() {
         return nickname;
+    }
+    
+    
+    public void setImage(String image) {
+    	this.image = image ;
     }
 
     @Override

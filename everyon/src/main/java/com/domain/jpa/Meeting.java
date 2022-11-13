@@ -28,7 +28,7 @@ public class Meeting extends BaseTimeEntity {
     private Long id;
     
 	@Column()
-	private int owner ;
+	private Long owner ;
 	@Column()
 	private String room_code;
 	@Column()
@@ -50,7 +50,7 @@ public class Meeting extends BaseTimeEntity {
 	
 	
 	@Builder
-	public Meeting(int owner, String room_code, int max_people, String main_image_link, String title, String description) {
+	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description) {
 		this.owner = owner ;
 		this.room_code = room_code;
 		this.max_people = max_people;

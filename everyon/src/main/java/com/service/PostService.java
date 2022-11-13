@@ -10,7 +10,9 @@ import com.app.dto.MainMeetDto;
 
 public interface PostService {
 
-	public Page<MainMeetDto> findAllMeeting(Pageable pageRequest);
+	public Page<MainMeetDto> findAllMeeting(Pageable pageRequest, String token);
 	
-	public ResponseEntity<JSONObject> createMeeting(CreateMeetDto createMeetDto);
+	public ResponseEntity<JSONObject> createMeeting(CreateMeetDto createMeetDto, String token);
+	
+	public ResponseEntity<JSONObject> convertFavorite(String token, Long meet_id);
 }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.domain.jpa.CustomUser;
 
 @Repository
-public interface UserRepository extends JpaRepository<CustomUser, String> {
+public interface UserRepository extends JpaRepository<CustomUser, Long> {
 	
 	public CustomUser findByUid(String uid);
 	

@@ -5,11 +5,12 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import com.domain.jpa.Meeting;
 
 
-
+@Repository
 public interface MeetRepository extends JpaRepository<Meeting, Long>  {
 
 	   //@Query("SELECT s FROM Store s WHERE s.code_nm =?1")

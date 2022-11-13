@@ -16,15 +16,15 @@ import lombok.NoArgsConstructor;
 public class Participant {
 	
 	@Id
-    private Long user_id;
+    private Long userId;
     
 	@Column()
-	private Long meet_id ;
+	private Long meetId ;
 	
 	@Builder
 	public Participant(Long user_id, Long meet_id) {
-		this.user_id = user_id;
-		this.meet_id = meet_id;
+		this.userId = user_id;
+		this.meetId = meet_id;
 	}
 
 }
