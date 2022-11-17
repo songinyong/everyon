@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
+import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.MainMeetDto;
 
@@ -17,4 +18,6 @@ public interface PostService {
 	public ResponseEntity<JSONObject> convertFavorite(String token, Long meet_id);
 	
 	public Page<MainMeetDto> findCategoryMeeting(Pageable pageRequest, String category, String token);
+	
+	public ResponseEntity<JSONObject> applyMeet(String token, ApplyMeetDto applyDto);
 }

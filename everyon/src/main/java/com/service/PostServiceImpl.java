@@ -14,12 +14,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.MainMeetDto;
 import com.domain.jpa.Favorite;
 import com.domain.jpa.Meeting;
 import com.domain.jpa.Participant;
 import com.domain.jpa.repository.FavoriteRepository;
+import com.domain.jpa.repository.MeetApplicationRepository;
 import com.domain.jpa.repository.MeetRepository;
 import com.domain.jpa.repository.ParticipantRepository;
 import com.domain.jpa.repository.UserRepository;
@@ -33,6 +35,7 @@ public class PostServiceImpl implements PostService {
 	private ParticipantRepository participantRepo ;
 	private FavoriteRepository favoriteRepo;
 	private UserRepository userRepo;
+	private MeetApplicationRepository applyRepo;
 	
 	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
@@ -68,6 +71,11 @@ public class PostServiceImpl implements PostService {
 	public void setCommonUtil(CommonUtil commonUtil) {
 	    this.commonUtil = commonUtil;
 	 }
+	
+	@Autowired
+	public void setMeetApplicatonRepository(MeetApplicationRepository applyRepository) {
+		this.applyRepo = applyRepository ;
+	}
 	
 	 /**
 	  * 메인화면에 출력되는 게시글 목록 
@@ -226,11 +234,26 @@ public class PostServiceImpl implements PostService {
 	}
 	
 	/**
-	 * 즐겨찾기 테이블 조회후 즐겨찾기
+	 * 방 가입 신청
 	 */
+	@Transactional
+	public ResponseEntity<JSONObject> applyMeet(String token, ApplyMeetDto applyDto) {
+		JSONObject resultObj = new JSONObject(); 
+		
+		Long user_id = commonUtil.getUserId(token);
+		applyDto.setUserId(user_id);
+		applyRepo.save(applyDto.toEntity());
+		
+		resultObj.put("result","true");
+		
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+		
+	}
 	
 	
 	/**
 	 * 좋아요 추가
 	 */
+	
+	
 }

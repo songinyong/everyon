@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.MainMeetDto;
 import com.service.PostService;
@@ -53,6 +54,12 @@ public class PostController {
 	 @PutMapping("/favorite")
 	 public ResponseEntity<JSONObject> createmeet(HttpServletRequest req, @RequestParam("meetId") Long meetId) {
 	    	return postService.convertFavorite(req.getHeader("Authorization"), meetId);
+	 }
+	 
+	 //방가입 신청
+	 @PostMapping("/applymeet")
+	 public ResponseEntity<JSONObject> createmeet(@RequestBody ApplyMeetDto applyDto, HttpServletRequest req) {
+	    	return postService.applyMeet(req.getHeader("Authorization"), applyDto);
 	 }
 	 
 	 
