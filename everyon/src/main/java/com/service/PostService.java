@@ -15,4 +15,6 @@ public interface PostService {
 	public ResponseEntity<JSONObject> createMeeting(CreateMeetDto createMeetDto, String token);
 	
 	public ResponseEntity<JSONObject> convertFavorite(String token, Long meet_id);
+	
+	public Page<MainMeetDto> findCategoryMeeting(Pageable pageRequest, String category, String token);
 }

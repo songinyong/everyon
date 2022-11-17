@@ -34,10 +34,10 @@ public class PostServiceImpl implements PostService {
 	private FavoriteRepository favoriteRepo;
 	private UserRepository userRepo;
 	
-	//user 아이디 기준 즐겨찾기한 모음
+	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
 	
-	//meet 아이디 기준 가입한 user들의 프로필 사진
+	//meet 아이디 기준 가입한 user들의 프로필 사진 캐시용
 	private HashMap<Long, List<Long>> MeetInUser = new HashMap<Long, List<Long>>();
 	
 	
@@ -86,6 +86,23 @@ public class PostServiceImpl implements PostService {
     	return dtoList;
     }
 	
+
+	 /**
+	  * 메인화면에 출력되는 게시글 목록 
+	  * */
+	@Transactional
+    public Page<MainMeetDto> findCategoryMeeting(Pageable pageRequest, String category, String token) {
+		
+		 Page<Meeting> meetList = meetRepo.findMeetingByCategory(pageRequest, category);
+		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
+		 
+		 List<Long> fv =  getFavorite(commonUtil.getUserId(token));
+		 
+		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
+ 
+		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
+   	return dtoList;
+   }
 	
 	//유저가 등록한 즐겨찾기 모음을 가져온다
 	private List<Long> getFavorite(Long user_id) {
