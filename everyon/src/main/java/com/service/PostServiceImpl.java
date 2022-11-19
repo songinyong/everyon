@@ -191,20 +191,31 @@ public class PostServiceImpl implements PostService {
 				
 			
 			meet_id = meetRepo.save(createMeetDto.toEntity()).getId();
+			System.out.println(meet_id);
 			resultObj.put("result","true");
 			
-			participantRepo.save(Participant.builder()
-					.user_id((long) createMeetDto.getOwner())
-					.meet_id(meet_id)
-					.build());
+			addParticipant(createMeetDto.getOwner(),meet_id );
+			
+
 			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
 		}
 		catch(Exception e) {
+			System.out.println(e);
     		resultObj.put("result","false");
     		resultObj.put("reason",e);
     		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 		
 	    }
+	}
+	
+	/*
+	 * 참여자 등록 API
+	 * */
+	private void addParticipant(long user_id, long meet_id) {
+		participantRepo.save(Participant.builder()
+				.user_id(user_id)
+				.meet_id(meet_id)
+				.build());
 	}
 	
 	/**
