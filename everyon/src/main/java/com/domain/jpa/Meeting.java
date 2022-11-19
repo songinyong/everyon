@@ -50,7 +50,7 @@ public class Meeting extends BaseTimeEntity {
 	
 	
 	@Builder
-	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description) {
+	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description, String category) {
 		this.owner = owner ;
 		this.room_code = room_code;
 		this.max_people = max_people;
@@ -59,6 +59,7 @@ public class Meeting extends BaseTimeEntity {
 		this.description = description;
 		this.participant_count = 1;
 		this.favorite_count =0;
+		this.category = category;
 
 	}
 }
