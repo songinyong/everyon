@@ -62,5 +62,11 @@ public class PostController {
 	    	return postService.applyMeet(req.getHeader("Authorization"), applyDto);
 	 }
 	 
+	 //검색 API
+	 @GetMapping("/meet/search/{keyword}/{category}")
+	 public Page<MainMeetDto> searchMeet(@PageableDefault(size=10) Pageable pageRequest,@PathVariable String keyword, @PathVariable String category,  HttpServletRequest req) {
+	    	return postService.searchMeeting(pageRequest, keyword,category, req.getHeader("Authorization"));
+	 }	 
+	 	 
 	 
 }

@@ -20,4 +20,6 @@ public interface PostService {
 	public Page<MainMeetDto> findCategoryMeeting(Pageable pageRequest, String category, String token);
 	
 	public ResponseEntity<JSONObject> applyMeet(String token, ApplyMeetDto applyDto);
+	
+	public Page<MainMeetDto> searchMeeting(Pageable pageRequest, String keyword, String category,  String token);
 }

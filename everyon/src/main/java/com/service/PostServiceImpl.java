@@ -96,7 +96,7 @@ public class PostServiceImpl implements PostService {
 	
 
 	 /**
-	  * 메인화면에 출력되는 게시글 목록 
+	  * 메인화면에 출력되는 카테고리 기준 게시글 목록 
 	  * */
 	@Transactional
     public Page<MainMeetDto> findCategoryMeeting(Pageable pageRequest, String category, String token) {
@@ -263,8 +263,32 @@ public class PostServiceImpl implements PostService {
 	
 	
 	/**
-	 * 좋아요 추가
+	 * 좋아요 추가 or 취소
+	 * 파라미터: meet_id
 	 */
 	
-	
+	/**
+	 * 통합검색
+	 * 파라미터: keyword:url, category_code:body
+	 * */
+	@Transactional
+    public Page<MainMeetDto> searchMeeting(Pageable pageRequest, String keyword, String category,  String token) {
+		Page<Meeting> meetList;
+		 if(keyword != null && category != null)
+		     meetList = meetRepo.findStoreByKeywordAndCategory(pageRequest, keyword, category);
+		 else if(keyword == null && category != null )
+			 meetList = meetRepo.findMeetingByCategory(pageRequest, category);
+		 else if(keyword != null && category == null )
+			 meetList = meetRepo.findStoreByKeyword(pageRequest, keyword);
+		 else
+			 meetList = meetRepo.findAll(pageRequest);
+		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
+		 
+		 List<Long> fv =  getFavorite(commonUtil.getUserId(token));
+		 
+		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
+ 
+		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
+   	return dtoList;
+   }	
 }
