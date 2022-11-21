@@ -46,11 +46,13 @@ public class Meeting extends BaseTimeEntity {
 	private String category;
 	@Column()
 	private int	favorite_count;
-	
+
+	@Column()
+	private int	like_count;
 	
 	
 	@Builder
-	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description, String category) {
+	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description, String category, int favorite_count, int like_count) {
 		this.owner = owner ;
 		this.room_code = room_code;
 		this.max_people = max_people;
@@ -58,8 +60,17 @@ public class Meeting extends BaseTimeEntity {
 		this.title = title;
 		this.description = description;
 		this.participant_count = 1;
-		this.favorite_count =0;
+		this.favorite_count =favorite_count;
+		this.like_count = like_count;
 		this.category = category;
 
+	}
+	
+	public void increateLike_count() {
+		like_count++;
+	}
+	
+	public void decreaseLike_count() {
+		like_count--;
 	}
 }

@@ -22,4 +22,6 @@ public interface PostService {
 	public ResponseEntity<JSONObject> applyMeet(String token, ApplyMeetDto applyDto);
 	
 	public Page<MainMeetDto> searchMeeting(Pageable pageRequest, String keyword, String category,  String token);
+	
+	public ResponseEntity<JSONObject> convertLike(String token, Long meet_id);
 }

@@ -18,9 +18,11 @@ import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.MainMeetDto;
 import com.domain.jpa.Favorite;
+import com.domain.jpa.Like;
 import com.domain.jpa.Meeting;
 import com.domain.jpa.Participant;
 import com.domain.jpa.repository.FavoriteRepository;
+import com.domain.jpa.repository.LikeRepository;
 import com.domain.jpa.repository.MeetApplicationRepository;
 import com.domain.jpa.repository.MeetRepository;
 import com.domain.jpa.repository.ParticipantRepository;
@@ -36,6 +38,7 @@ public class PostServiceImpl implements PostService {
 	private FavoriteRepository favoriteRepo;
 	private UserRepository userRepo;
 	private MeetApplicationRepository applyRepo;
+	private LikeRepository likeRepo ;
 	
 	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
@@ -76,6 +79,11 @@ public class PostServiceImpl implements PostService {
 	public void setMeetApplicatonRepository(MeetApplicationRepository applyRepository) {
 		this.applyRepo = applyRepository ;
 	}
+	
+	@Autowired
+	public void setLikeRepository(LikeRepository likeRepository) {
+		this.likeRepo = likeRepository ;
+	}	
 	
 	 /**
 	  * 메인화면에 출력되는 게시글 목록 
@@ -266,7 +274,34 @@ public class PostServiceImpl implements PostService {
 	 * 좋아요 추가 or 취소
 	 * 파라미터: meet_id
 	 */
-	
+	@Transactional
+	public ResponseEntity<JSONObject> convertLike(String token, Long meet_id) {
+		JSONObject resultObj = new JSONObject(); 
+		
+		Long user_id = commonUtil.getUserId(token);
+		
+
+		if(likeRepo.findByUserIdAndMeetId(user_id, meet_id).isPresent()) {
+			likeRepo.deleteByUserIdAndMeetId(user_id, meet_id);
+			Meeting meet = meetRepo.getById(meet_id) ;
+			meet.decreaseLike_count();
+			meetRepo.save(meet);
+		}
+		else {
+			likeRepo.save(Like.builder()
+					.user_id(user_id)
+					.meet_id(meet_id).build());
+			
+			Meeting meet = meetRepo.getById(meet_id) ;
+			meet.increateLike_count();
+			meetRepo.save(meet);
+		}
+
+		resultObj.put("result","true");
+		
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+			
+	}
 	/**
 	 * 통합검색
 	 * 파라미터: keyword:url, category_code:body
@@ -274,11 +309,11 @@ public class PostServiceImpl implements PostService {
 	@Transactional
     public Page<MainMeetDto> searchMeeting(Pageable pageRequest, String keyword, String category,  String token) {
 		Page<Meeting> meetList;
-		 if(keyword != null && category != null)
+		 if(!keyword.equals(" ") && !category.equals(" "))
 		     meetList = meetRepo.findStoreByKeywordAndCategory(pageRequest, keyword, category);
-		 else if(keyword == null && category != null )
+		 else if(keyword.equals(" ") && !category.equals(" "))
 			 meetList = meetRepo.findMeetingByCategory(pageRequest, category);
-		 else if(keyword != null && category == null )
+		 else if(!keyword.equals(" ") && category.equals(" ") )
 			 meetList = meetRepo.findStoreByKeyword(pageRequest, keyword);
 		 else
 			 meetList = meetRepo.findAll(pageRequest);

@@ -52,8 +52,14 @@ public class PostController {
 	 
 	 //즐겨찾기 추가나 삭제
 	 @PutMapping("/favorite")
-	 public ResponseEntity<JSONObject> createmeet(HttpServletRequest req, @RequestParam("meetId") Long meetId) {
+	 public ResponseEntity<JSONObject> convertFavorite(HttpServletRequest req, @RequestParam("meetId") Long meetId) {
 	    	return postService.convertFavorite(req.getHeader("Authorization"), meetId);
+	 }
+
+	 //좋아요 추가나 삭제
+	 @PutMapping("/like")
+	 public ResponseEntity<JSONObject> convertLike(HttpServletRequest req, @RequestParam("meetId") Long meetId) {
+	    	return postService.convertLike(req.getHeader("Authorization"), meetId);
 	 }
 	 
 	 //방가입 신청
@@ -63,10 +69,13 @@ public class PostController {
 	 }
 	 
 	 //검색 API
-	 @GetMapping("/meet/search/{keyword}/{category}")
-	 public Page<MainMeetDto> searchMeet(@PageableDefault(size=10) Pageable pageRequest,@PathVariable String keyword, @PathVariable String category,  HttpServletRequest req) {
+	 @GetMapping("/meet/search")
+	 public Page<MainMeetDto> searchMeet(@PageableDefault(size=10) Pageable pageRequest,@RequestParam("keyword") String keyword, @RequestParam("category") String category,  HttpServletRequest req) {
 	    	return postService.searchMeeting(pageRequest, keyword,category, req.getHeader("Authorization"));
-	 }	 
+	    	
+	    	
+	 }
+	 
 	 	 
 	 
 }

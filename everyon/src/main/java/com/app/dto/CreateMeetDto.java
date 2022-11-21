@@ -32,6 +32,8 @@ public class CreateMeetDto {
 				.title(title)
 				.description(description)
 				.category(category_code)
+				.favorite_count(0)
+				.like_count(0)
 				.build();
 	}
 	

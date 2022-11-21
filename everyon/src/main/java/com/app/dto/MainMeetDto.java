@@ -16,7 +16,7 @@ public class MainMeetDto {
 	private Long owner ;
 	private String room_code;
 	private int max_people;
-	private int participant_count;
+	private int like_count;
 	private String main_image;	
 	private String title;
 	
@@ -30,7 +30,7 @@ public class MainMeetDto {
 		this.owner = entity.getOwner();
 		this.room_code = entity.getRoom_code();
 		this.max_people = entity.getMax_people();
-		this.participant_count = entity.getParticipant_count();
+		this.like_count = entity.getLike_count();
 		this.main_image = entity.getMain_image_link();
 		this.title = entity.getTitle();
 		this.favorite = false ;
