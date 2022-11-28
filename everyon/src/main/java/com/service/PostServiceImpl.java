@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,16 +17,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
+import com.app.dto.PutMeetDto;
+import com.app.vo.DetailViewUserVO;
+import com.domain.jpa.CustomUser;
 import com.domain.jpa.Favorite;
 import com.domain.jpa.Like;
 import com.domain.jpa.Meeting;
 import com.domain.jpa.Participant;
+import com.domain.jpa.Posts;
 import com.domain.jpa.repository.FavoriteRepository;
 import com.domain.jpa.repository.LikeRepository;
 import com.domain.jpa.repository.MeetApplicationRepository;
 import com.domain.jpa.repository.MeetRepository;
 import com.domain.jpa.repository.ParticipantRepository;
+import com.domain.jpa.repository.PostsRepository;
 import com.domain.jpa.repository.UserRepository;
 import com.util.CommonUtil;
 
@@ -39,6 +46,7 @@ public class PostServiceImpl implements PostService {
 	private UserRepository userRepo;
 	private MeetApplicationRepository applyRepo;
 	private LikeRepository likeRepo ;
+	private PostsRepository postRepo;
 	
 	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
@@ -46,7 +54,7 @@ public class PostServiceImpl implements PostService {
 	//meet 아이디 기준 가입한 user들의 프로필 사진 캐시용
 	private HashMap<Long, List<Long>> MeetInUser = new HashMap<Long, List<Long>>();
 	
-	
+
 	private CommonUtil commonUtil;
 	
 	
@@ -83,7 +91,12 @@ public class PostServiceImpl implements PostService {
 	@Autowired
 	public void setLikeRepository(LikeRepository likeRepository) {
 		this.likeRepo = likeRepository ;
-	}	
+	}
+	
+	@Autowired
+	public void setPostsRepository(PostsRepository postRepository) {
+		this.postRepo = postRepository;
+	}
 	
 	 /**
 	  * 메인화면에 출력되는 게시글 목록 
@@ -120,6 +133,106 @@ public class PostServiceImpl implements PostService {
    	return dtoList;
    }
 	
+	 /**
+	  * 세부화면에 출력되는 방 정보
+	  * */
+	@Transactional
+    public DetailMeetDto getDetailMeeting(Long meet_id, String token) {
+		Optional<Meeting> meet = meetRepo.findById(meet_id);
+		
+		
+		//가입하기전일때
+		if(!participantRepo.findByMeetId(meet_id).stream()
+	            .anyMatch(p -> p.getUserId().equals(commonUtil.getUserId(token))) ) {
+			return DetailMeetDto.builder()
+					.main_image(commonUtil.getImageLink(meet.get().getMain_image_link()))
+					.category_code(meet.get().getCategory())
+					.max_people(meet.get().getMax_people())
+					.like_count(meet.get().getLike_count())
+					.title(meet.get().getTitle())
+					.room_code(meet.get().getRoom_code())
+					.meet_id(meet_id)
+					.build();
+		}
+		//가입한후
+		else {
+			List<DetailViewUserVO> detailUser = new ArrayList<DetailViewUserVO>();
+			Optional<Posts> post = postRepo.findByMeetId(meet_id);
+			
+			for(Long u : getMeetUser(meet_id)) {
+				
+				Optional<CustomUser> user = userRepo.findById(u);
+				
+				if(user.isPresent())
+				detailUser.add(DetailViewUserVO.builder()
+						.image(commonUtil.getImageLink(user.get().getImage()))
+						.nickname(user.get().getNickname())
+						.user_id(u).build());
+			}
+			
+			DetailMeetDto detailMeetDto = DetailMeetDto.builder()
+					.main_image(commonUtil.getImageLink(meet.get().getMain_image_link()))
+					.category_code(meet.get().getCategory())
+					.max_people(meet.get().getMax_people())
+					.like_count(meet.get().getLike_count())
+					.title(meet.get().getTitle())
+					.room_code(meet.get().getRoom_code())
+					.join_list(detailUser)
+					.meet_id(meet_id)
+					.description(meet.get().getDescription())
+					.build();
+			
+			if(post.isPresent()) {
+				detailMeetDto.setMeet_url(post.get().getMeet_url());
+				detailMeetDto.setOpen_url(post.get().getOpen_url());
+			}
+			
+			return detailMeetDto;
+		}
+		
+	}
+	
+	/*
+	 * 모임 정보 업데이트
+	 * */
+	@Transactional
+	public ResponseEntity<JSONObject> putMeeting(PutMeetDto putMeetDto, String token) {
+		JSONObject resultObj = new JSONObject();  
+		
+		Optional<Meeting> meet = meetRepo.findById(putMeetDto.getMeet_id());
+		
+		if(meet.isPresent()) {
+			meet.get().updateInfo(putMeetDto);
+		    meetRepo.save(meet.get());
+		    
+		    Optional<Posts> post = postRepo.findByMeetId(putMeetDto.getMeet_id());
+		    if(post.isPresent()) {
+		    	post.get().updateInfo(putMeetDto);
+		    	postRepo.save(post.get());
+		    }
+		    else {
+		    	postRepo.save(putMeetDto.toPostEntity());
+		    }
+		    
+		}
+		
+		
+		
+		resultObj.put("result","true");
+		
+		
+
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
+		
+	}
+	
+	
+	
+	 /**
+	  * 세부화면에 출력되는 방 수정
+	  * 
+	  * 
+	  * */
 	//유저가 등록한 즐겨찾기 모음을 가져온다
 	private List<Long> getFavorite(Long user_id) {
 		if(usersFavorite.containsKey(user_id)) 

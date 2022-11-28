@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<CustomUser, Long> {
 	public CustomUser findByUid(String uid);
 	
 	public Optional<CustomUser> findByUidAndPlatform(String uid, String flatform);
+	
+	
 }

@@ -1,7 +1,5 @@
 package com.domain.jpa;
 
-import java.time.LocalDateTime;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,18 +7,22 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.DynamicUpdate;
 
+import com.app.dto.PutMeetDto;
 import com.domain.BaseTimeEntity;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name="meeting")
+@DynamicUpdate
 public class Meeting extends BaseTimeEntity {
 
     @Id
@@ -52,7 +54,7 @@ public class Meeting extends BaseTimeEntity {
 	
 	
 	@Builder
-	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description, String category, int favorite_count, int like_count) {
+	public Meeting(Long owner, String room_code, int max_people, String main_image_link, String title, String description, String category, int favorite_count, int like_count, Long meet_id) {
 		this.owner = owner ;
 		this.room_code = room_code;
 		this.max_people = max_people;
@@ -63,6 +65,7 @@ public class Meeting extends BaseTimeEntity {
 		this.favorite_count =favorite_count;
 		this.like_count = like_count;
 		this.category = category;
+		this.id = meet_id;
 
 	}
 	
@@ -72,5 +75,20 @@ public class Meeting extends BaseTimeEntity {
 	
 	public void decreaseLike_count() {
 		like_count--;
+	}
+	
+	public void updateInfo(PutMeetDto putMeetDto) {
+		if(putMeetDto.getRoom_code() != null)
+			this.room_code = putMeetDto.getRoom_code();
+		
+		if(putMeetDto.getMain_image() != null)
+			this.main_image_link = putMeetDto.getMain_image();
+		if(putMeetDto.getDescription() != null)
+			this.description = putMeetDto.getDescription();
+		if(putMeetDto.getTitle() != null)
+			this.title = putMeetDto.getTitle();
+		if(putMeetDto.getCategory_code() != null)
+			this.category = putMeetDto.getCategory_code();
+		
 	}
 }

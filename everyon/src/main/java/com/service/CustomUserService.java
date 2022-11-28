@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dto.RegisterDto;
+import com.app.vo.MyPageVo;
 import com.config.auth.util.RequestUtil;
 import com.domain.jpa.CustomUser;
 import com.domain.jpa.repository.UserRepository;
@@ -131,5 +132,25 @@ public class CustomUserService implements UserDetailsService {
     	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
     	
     }
+    
+    /*
+     * 
+     * 마이페이지 
+     * */
+    public MyPageVo getMyPage(String token) {
+    	Optional<CustomUser> user = userRepository.findById(commonUtil.getUserId(token));
+    	
+    	if(user.isPresent()) {
+    		return MyPageVo.builder()
+    		.image(commonUtil.getImageLink(user.get().getImage()))
+    		.nickname(user.get().getNickname())
+    		.introduce(user.get().getIntroduce())
+    		.build();
+    	}
+    	else
+    		return MyPageVo.builder().build();
+    		
+    }
+    
    
 }

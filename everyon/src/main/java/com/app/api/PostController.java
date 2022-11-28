@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
+import com.app.dto.PutMeetDto;
 import com.service.PostService;
 
 import lombok.RequiredArgsConstructor;
@@ -76,6 +78,19 @@ public class PostController {
 	    	
 	 }
 	 
+	 //meet_id기준 세부 정보 검색
+	 @GetMapping("/meet/detailview/{meet_id}")
+	 public DetailMeetDto detailView(@PathVariable Long meet_id,HttpServletRequest req) {
+	    	return postService.getDetailMeeting(meet_id, req.getHeader("Authorization"));
+	    	
+	    	
+	 }	 
+	 
+	 //meet의 값 변경
+	 @PutMapping("/meet/updateMeet")
+	 public ResponseEntity<JSONObject> putMeeting(@RequestBody PutMeetDto putMeetDto, String token, HttpServletRequest req) {
+		 return postService.putMeeting(putMeetDto, req.getHeader("Authorization"));
+	 }
 	 	 
 	 
 }

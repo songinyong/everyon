@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.dto.RegisterDto;
 import com.app.dto.UploadImageDto;
+import com.app.vo.MyPageVo;
 import com.service.CustomUserService;
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,13 @@ public class UserController {
 		return userService.uploadImage(req.getHeader("Authorization"), image.getImage());
 	}
 
+	
+	@GetMapping("/myPage")
+	public MyPageVo getMyPage(HttpServletRequest req) {
+		
+		return userService.getMyPage(req.getHeader("Authorization"));
+		
+	}
 }
 
 //@RequestHeader(value="Authorization") String token,

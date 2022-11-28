@@ -36,6 +36,9 @@ public class CustomUser implements UserDetails {
     @Column
     private String image;
 
+    @Column
+    private String introduce;
+    
     @Builder
     public CustomUser(String platform, String uid) {
     	
