@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.dto.RegisterDto;
+import com.app.dto.UpdateMyPageDto;
 import com.app.dto.UploadImageDto;
 import com.app.vo.MyPageVo;
 import com.service.CustomUserService;
@@ -47,6 +48,13 @@ public class UserController {
 	public MyPageVo getMyPage(HttpServletRequest req) {
 		
 		return userService.getMyPage(req.getHeader("Authorization"));
+		
+	}
+	
+	@PutMapping("/myPage/update")
+	public ResponseEntity<JSONObject> updateMyPage(@RequestBody UpdateMyPageDto updateMyPageDto, HttpServletRequest req) {
+		
+		return userService.updateMyPage(updateMyPageDto, req.getHeader("Authorization"));
 		
 	}
 }

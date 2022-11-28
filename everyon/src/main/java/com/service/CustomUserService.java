@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dto.RegisterDto;
+import com.app.dto.UpdateMyPageDto;
 import com.app.vo.MyPageVo;
 import com.config.auth.util.RequestUtil;
 import com.domain.jpa.CustomUser;
@@ -152,5 +153,26 @@ public class CustomUserService implements UserDetailsService {
     		
     }
     
+    /*
+     * 마이페이지 글 수정
+     * */
+    public ResponseEntity<JSONObject> updateMyPage(UpdateMyPageDto updateMyPageDto, String token) {
+    	
+    	Optional<CustomUser> user = userRepository.findById(commonUtil.getUserId(token));
+    	JSONObject resultObj = new JSONObject();
+    	
+    	if(user.isPresent()) {
+    		user.get().updateInfo(updateMyPageDto);
+    		userRepository.save(user.get());
+    		resultObj.put("result", true);
+    	}
+    	else {
+    		resultObj.put("result", false);
+    		resultObj.put("reason", "해당 유저가 존재하지 않습니다");
+    	}
+    	
+    	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+    	
+    }
    
 }

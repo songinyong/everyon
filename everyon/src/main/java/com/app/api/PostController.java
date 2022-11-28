@@ -87,7 +87,7 @@ public class PostController {
 	 }	 
 	 
 	 //meet의 값 변경
-	 @PutMapping("/meet/updateMeet")
+	 @PutMapping("/meet/update")
 	 public ResponseEntity<JSONObject> putMeeting(@RequestBody PutMeetDto putMeetDto, String token, HttpServletRequest req) {
 		 return postService.putMeeting(putMeetDto, req.getHeader("Authorization"));
 	 }

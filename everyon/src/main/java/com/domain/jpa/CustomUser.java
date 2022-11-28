@@ -12,6 +12,9 @@ import javax.persistence.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.app.dto.PutMeetDto;
+import com.app.dto.UpdateMyPageDto;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -51,6 +54,17 @@ public class CustomUser implements UserDetails {
     	this.platform = platform ;
     	this.uid = uid;
     }
+    
+	public void updateInfo(UpdateMyPageDto updateMyPageDto) {
+		
+		if(updateMyPageDto.getImage() != null)
+		    this.image = updateMyPageDto.getImage();
+		if(updateMyPageDto.getIntroduce() != null)
+			this.introduce = updateMyPageDto.getIntroduce();
+		if(updateMyPageDto.getNickname() != null)
+			this.nickname = updateMyPageDto.getNickname();
+		
+	}
 
 
     @Override
