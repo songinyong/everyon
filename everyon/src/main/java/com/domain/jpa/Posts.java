@@ -7,7 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.app.dto.PutMeetDto;
+import com.app.dto.UpdateMeetDto;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -37,7 +37,7 @@ public class Posts {
 		
 	}
 	
-	public void updateInfo(PutMeetDto putMeetDto) {
+	public void updateInfo(UpdateMeetDto putMeetDto) {
 		
 		if(putMeetDto.getMeet_url() != null)
 		    this.meet_url = putMeetDto.getMeet_url();

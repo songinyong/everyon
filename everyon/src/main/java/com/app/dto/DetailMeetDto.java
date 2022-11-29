@@ -24,11 +24,12 @@ public class DetailMeetDto {
 	private String description ;
 	private String category_code;
 	private int	like_count;
+	private int participant_count;
 	//private List<DetailViewUser> apply_list ;
 	private List<DetailViewUserVO> join_list;
 	
 	@Builder
-	public DetailMeetDto(String room_code, int max_people, String main_image, String title, String description, String  category_code, Long meet_id, String meet_url, String open_url ,int	like_count, List<DetailViewUserVO> join_list) {
+	public DetailMeetDto(String room_code, int max_people, String main_image, String title, String description, String  category_code, Long meet_id, String meet_url, String open_url ,int	like_count, List<DetailViewUserVO> join_list, int participant_count) {
 		this.room_code = room_code;
 		this.max_people = max_people;
 		this.main_image = main_image;
@@ -41,6 +42,7 @@ public class DetailMeetDto {
 		this.like_count = like_count;
 		//this.apply_list = apply_list;
 		this.join_list = join_list;
+		this.participant_count = participant_count;
 	}
 	
 	

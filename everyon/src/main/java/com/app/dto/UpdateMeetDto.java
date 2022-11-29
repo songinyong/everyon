@@ -10,7 +10,7 @@ import com.domain.jpa.Posts;
 import lombok.Getter;
 
 @Getter
-public class PutMeetDto {
+public class UpdateMeetDto {
 
 	private String meet_url;
 	private String open_url;
@@ -22,7 +22,7 @@ public class PutMeetDto {
 	private String category_code;
 	private Long meet_id;
 	
-	public PutMeetDto(String meet_url, String open_url, String room_code, int max_people, String main_image, String title, String description, String category_code, Long meet_id) {
+	public UpdateMeetDto(String meet_url, String open_url, String room_code, int max_people, String main_image, String title, String description, String category_code, Long meet_id) {
 		this.meet_url = meet_url;
 		this.open_url = open_url;
 		this.room_code = room_code;

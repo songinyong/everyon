@@ -9,7 +9,7 @@ import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
-import com.app.dto.PutMeetDto;
+import com.app.dto.UpdateMeetDto;
 
 public interface PostService {
 
@@ -29,5 +29,5 @@ public interface PostService {
 	
 	public DetailMeetDto getDetailMeeting(Long meet_id, String token);
 	
-	public ResponseEntity<JSONObject> putMeeting(PutMeetDto putMeetDto, String token);
+	public ResponseEntity<JSONObject> updateMeeting(UpdateMeetDto putMeetDto, String token);
 }

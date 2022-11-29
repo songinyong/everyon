@@ -21,7 +21,7 @@ import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
-import com.app.dto.PutMeetDto;
+import com.app.dto.UpdateMeetDto;
 import com.service.PostService;
 
 import lombok.RequiredArgsConstructor;
@@ -88,8 +88,8 @@ public class PostController {
 	 
 	 //meet의 값 변경
 	 @PutMapping("/meet/update")
-	 public ResponseEntity<JSONObject> putMeeting(@RequestBody PutMeetDto putMeetDto, String token, HttpServletRequest req) {
-		 return postService.putMeeting(putMeetDto, req.getHeader("Authorization"));
+	 public ResponseEntity<JSONObject> updateMeeting(@RequestBody UpdateMeetDto updateMeetDto, String token, HttpServletRequest req) {
+		 return postService.updateMeeting(updateMeetDto, req.getHeader("Authorization"));
 	 }
 	 	 
 	 

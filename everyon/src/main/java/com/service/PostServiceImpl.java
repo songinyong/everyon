@@ -19,7 +19,7 @@ import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
-import com.app.dto.PutMeetDto;
+import com.app.dto.UpdateMeetDto;
 import com.app.vo.DetailViewUserVO;
 import com.domain.jpa.CustomUser;
 import com.domain.jpa.Favorite;
@@ -148,7 +148,7 @@ public class PostServiceImpl implements PostService {
 					.main_image(commonUtil.getImageLink(meet.get().getMain_image_link()))
 					.category_code(meet.get().getCategory())
 					.max_people(meet.get().getMax_people())
-					.like_count(meet.get().getLike_count())
+					.participant_count(meet.get().getParticipant_count())
 					.title(meet.get().getTitle())
 					.room_code(meet.get().getRoom_code())
 					.meet_id(meet_id)
@@ -174,6 +174,7 @@ public class PostServiceImpl implements PostService {
 					.main_image(commonUtil.getImageLink(meet.get().getMain_image_link()))
 					.category_code(meet.get().getCategory())
 					.max_people(meet.get().getMax_people())
+					.participant_count(meet.get().getParticipant_count())
 					.like_count(meet.get().getLike_count())
 					.title(meet.get().getTitle())
 					.room_code(meet.get().getRoom_code())
@@ -196,22 +197,22 @@ public class PostServiceImpl implements PostService {
 	 * 모임 정보 업데이트
 	 * */
 	@Transactional
-	public ResponseEntity<JSONObject> putMeeting(PutMeetDto putMeetDto, String token) {
+	public ResponseEntity<JSONObject> updateMeeting(UpdateMeetDto updateMeetDto, String token) {
 		JSONObject resultObj = new JSONObject();  
 		
-		Optional<Meeting> meet = meetRepo.findById(putMeetDto.getMeet_id());
+		Optional<Meeting> meet = meetRepo.findById(updateMeetDto.getMeet_id());
 		
 		if(meet.isPresent()) {
-			meet.get().updateInfo(putMeetDto);
+			meet.get().updateInfo(updateMeetDto);
 		    meetRepo.save(meet.get());
 		    
-		    Optional<Posts> post = postRepo.findByMeetId(putMeetDto.getMeet_id());
+		    Optional<Posts> post = postRepo.findByMeetId(updateMeetDto.getMeet_id());
 		    if(post.isPresent()) {
-		    	post.get().updateInfo(putMeetDto);
+		    	post.get().updateInfo(updateMeetDto);
 		    	postRepo.save(post.get());
 		    }
 		    else {
-		    	postRepo.save(putMeetDto.toPostEntity());
+		    	postRepo.save(updateMeetDto.toPostEntity());
 		    }
 		    
 		}
@@ -220,8 +221,6 @@ public class PostServiceImpl implements PostService {
 		
 		resultObj.put("result","true");
 		
-		
-
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
 		
 	}
@@ -439,4 +438,11 @@ public class PostServiceImpl implements PostService {
 		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
    	return dtoList;
    }	
+	
+	
+    /**
+     * 즐겨찾기한 모임 검색
+     * */
+	
+
 }

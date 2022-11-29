@@ -9,7 +9,7 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.DynamicUpdate;
 
-import com.app.dto.PutMeetDto;
+import com.app.dto.UpdateMeetDto;
 import com.domain.BaseTimeEntity;
 
 import lombok.Builder;
@@ -77,7 +77,7 @@ public class Meeting extends BaseTimeEntity {
 		like_count--;
 	}
 	
-	public void updateInfo(PutMeetDto putMeetDto) {
+	public void updateInfo(UpdateMeetDto putMeetDto) {
 		if(putMeetDto.getRoom_code() != null)
 			this.room_code = putMeetDto.getRoom_code();
 		
