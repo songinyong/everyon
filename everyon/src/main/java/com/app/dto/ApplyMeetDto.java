@@ -2,6 +2,9 @@ package com.app.dto;
 
 import com.domain.jpa.MeetApplication;
 
+import lombok.Getter;
+
+@Getter
 public class ApplyMeetDto {
 	
 	private Long user_id ;

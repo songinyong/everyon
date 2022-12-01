@@ -373,11 +373,26 @@ public class PostServiceImpl implements PostService {
 	public ResponseEntity<JSONObject> applyMeet(String token, ApplyMeetDto applyDto) {
 		JSONObject resultObj = new JSONObject(); 
 		
-		Long user_id = commonUtil.getUserId(token);
-		applyDto.setUserId(user_id);
-		applyRepo.save(applyDto.toEntity());
+		if(applyDto.getMeet_id() == null) {
+			resultObj.put("result","false");
+			resultObj.put("reason","meet_id가 없습니다.");
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+		}
+		Long user_id = commonUtil.getUserId(token);	
+		if(applyRepo.findByUserIdAndMeetId(user_id, applyDto.getMeet_id()).isEmpty()) {
 		
-		resultObj.put("result","true");
+			applyDto.setUserId(user_id);
+			applyRepo.save(applyDto.toEntity());
+			
+			resultObj.put("result","true");
+		
+		}
+		else {
+			
+			resultObj.put("result","false");
+			resultObj.put("reason","이미 동일한 모임 신청이 존재합니다.");
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+		}
 		
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 		
