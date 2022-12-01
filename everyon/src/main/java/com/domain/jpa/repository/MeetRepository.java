@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.domain.jpa.Meeting;
-
+import com.domain.jpa.Participant;
 
 import java.util.List;
 
@@ -28,5 +28,7 @@ public interface MeetRepository extends JpaRepository<Meeting, Long>  {
 
 		@Query("SELECT m FROM Meeting m WHERE m.title like %?1% and m.category = ?2")
 		Page<Meeting> findStoreByKeywordAndCategory(Pageable pageable, String keyword, String category_code);
+		
+		public List<Meeting> findByOwner(Long owner) ;
 }
  

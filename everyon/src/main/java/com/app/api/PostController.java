@@ -1,5 +1,7 @@
 package com.app.api;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.json.simple.JSONObject;
@@ -22,6 +24,7 @@ import com.app.dto.CreateMeetDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
 import com.app.dto.UpdateMeetDto;
+import com.app.vo.MinMeetVo;
 import com.service.PostService;
 
 import lombok.RequiredArgsConstructor;
@@ -91,6 +94,31 @@ public class PostController {
 	 public ResponseEntity<JSONObject> updateMeeting(@RequestBody UpdateMeetDto updateMeetDto, String token, HttpServletRequest req) {
 		 return postService.updateMeeting(updateMeetDto, req.getHeader("Authorization"));
 	 }
-	 	 
+	 
+	 //
+	 @GetMapping("/min/favorite")
+	 public List<MinMeetVo> minFavoriteMeet( HttpServletRequest req) {
+	    	return postService.getMinFavoriteMeet(req.getHeader("Authorization"));
+	 }
+	 
+	 @GetMapping("/min/like")
+	 public List<MinMeetVo> minlikeMeet( HttpServletRequest req) {
+	    	return postService.getMinLikeMeet(req.getHeader("Authorization"));
+	 }
+	 
+	 @GetMapping("/min/joinmeet")
+	 public List<MinMeetVo> minjoinMeet( HttpServletRequest req) {
+	    	return postService.getMinJoinMeet(req.getHeader("Authorization"));
+	 }
+	 
+	 @GetMapping("/min/createmeet")
+	 public List<MinMeetVo> minCreateMeet( HttpServletRequest req) {
+	    	return postService.getMinCreateMeet(req.getHeader("Authorization"));
+	 }
+	 
+	 @GetMapping("/min/applymeet")
+	 public ResponseEntity<JSONObject> minApplyMeet( HttpServletRequest req) {
+	    	return postService.getMinApplyMeet(req.getHeader("Authorization"));
+	 }
 	 
 }

@@ -11,4 +11,6 @@ import com.domain.jpa.Participant;
 public interface ParticipantRepository extends JpaRepository<Participant, Long>{
 
 	public List<Participant> findByMeetId(Long meet_id) ;
+	
+	public List<Participant> findByUserId(Long user_id) ;
 }

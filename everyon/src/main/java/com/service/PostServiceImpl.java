@@ -21,9 +21,11 @@ import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
 import com.app.dto.UpdateMeetDto;
 import com.app.vo.DetailViewUserVO;
+import com.app.vo.MinMeetVo;
 import com.domain.jpa.CustomUser;
 import com.domain.jpa.Favorite;
 import com.domain.jpa.Like;
+import com.domain.jpa.MeetApplication;
 import com.domain.jpa.Meeting;
 import com.domain.jpa.Participant;
 import com.domain.jpa.Posts;
@@ -442,7 +444,152 @@ public class PostServiceImpl implements PostService {
 	
     /**
      * 즐겨찾기한 모임 검색
+     * 마이페이지에서 호출
      * */
+	public List<MinMeetVo> getMinFavoriteMeet(String token) {
+		
+	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
+		for(Long id :getFavorite(commonUtil.getUserId(token))) {
+			
+		    Optional<Meeting> meet = meetRepo.findById(id);
+		    if(meet.isPresent()) {
+		    	
+		    	MinMeetVo vo = MinMeetVo.builder()
+						.meet_id(id)
+						.title(meet.get().getTitle())
+						.build();
+		    	
+		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
+		    		vo.setImageLink(commonUtil.getImageLink(meet.get().getMain_image_link()));
+		    	
+				list.add(vo);
+					
+		    }
+		    
+		 }
+		
+		
+		return list ;
+	}
 	
+    /**
+     * 좋아요한 모임 검색
+     * 마이페이지에서 호출
+     * */
+	public List<MinMeetVo> getMinLikeMeet(String token) {
+		
+	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
+		for(Like like : likeRepo.findAllByUserId(commonUtil.getUserId(token))) {
+			
+		    Optional<Meeting> meet = meetRepo.findById(like.getMeetId());
+		    if(meet.isPresent()) {
+		    	
+		    	MinMeetVo vo = MinMeetVo.builder()
+						.meet_id(meet.get().getId())
+						.title(meet.get().getTitle())
+						.build();
+		    	
+		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
+		    		vo.setImageLink(commonUtil.getImageLink(meet.get().getMain_image_link()));
+		    	
+				list.add(vo);
+					
+		    }
+		    
+		 }
+		
+		
+		return list ;
+	}
+	
+    /**
+     * 참가중인 모임 검색
+     * -모임페이지에서 호출됨
+     * */
+	public List<MinMeetVo> getMinJoinMeet(String token) {
+		
+	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
+		for(Participant p : participantRepo.findByUserId(commonUtil.getUserId(token))) {
+			
+		    Optional<Meeting> meet = meetRepo.findById(p.getMeetId());
+		    if(meet.isPresent()) {
+		    	
+		    	MinMeetVo vo = MinMeetVo.builder()
+						.meet_id(meet.get().getId())
+						.title(meet.get().getTitle())
+						.build();
+		    	
+		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
+		    		vo.setImageLink(commonUtil.getImageLink(meet.get().getMain_image_link()));
+		    	
+				list.add(vo);
+					
+		    }
+		    
+		 }
+		
+		
+		return list ;
+	}
+	
+    /**
+     * 개설한 모임 검색
+     * -모임페이지에서 호출됨
+     * */
+	public List<MinMeetVo> getMinCreateMeet(String token) {
+		
+	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
+		for(Meeting meet : meetRepo.findByOwner(commonUtil.getUserId(token))) {
+			
+		    MinMeetVo vo = MinMeetVo.builder()
+						.meet_id(meet.getId())
+						.title(meet.getTitle())
+						.build();
+		    	
+		    if(meet.getMain_image_link() != null && !meet.getMain_image_link().equals("") )
+		    	vo.setImageLink(commonUtil.getImageLink(meet.getMain_image_link()));
+		    	
+			list.add(vo);
 
+		    
+		 }
+		
+		
+		return list ;
+	}
+	
+    /**
+     * 신청 대기중 모임 검색
+     * -모임페이지에서 호출됨
+     * */
+	public ResponseEntity<JSONObject> getMinApplyMeet(String token) {
+		
+		JSONObject resultObj = new JSONObject(); 
+		
+	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
+		for(Optional<MeetApplication> a : applyRepo.findByUserId(commonUtil.getUserId(token))) {
+			
+			if(a.isPresent()) {
+			
+		    Optional<Meeting> meet = meetRepo.findById(a.get().getMeetId());
+		    if(meet.isPresent()) {
+		    	
+		    	MinMeetVo vo = MinMeetVo.builder()
+						.meet_id(meet.get().getId())
+						.title(meet.get().getTitle())
+						.build();
+		    	
+		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
+		    		vo.setImageLink(commonUtil.getImageLink(meet.get().getMain_image_link()));
+		    	
+				list.add(vo);
+					
+		    }
+			}
+		 }
+		
+		resultObj.put("result", list);
+		
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+	}
 }
