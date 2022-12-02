@@ -19,9 +19,11 @@ import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
+import com.app.dto.PostDecideApplyDto;
 import com.app.dto.UpdateMeetDto;
 import com.app.vo.DetailViewUserVO;
 import com.app.vo.MinMeetVo;
+import com.domain.jpa.ApplyLog;
 import com.domain.jpa.CustomUser;
 import com.domain.jpa.Favorite;
 import com.domain.jpa.Like;
@@ -36,6 +38,7 @@ import com.domain.jpa.repository.MeetRepository;
 import com.domain.jpa.repository.ParticipantRepository;
 import com.domain.jpa.repository.PostsRepository;
 import com.domain.jpa.repository.UserRepository;
+import com.domain.jpa.repository.log.ApplyLogRepository;
 import com.util.CommonUtil;
 
 @Service
@@ -49,6 +52,7 @@ public class PostServiceImpl implements PostService {
 	private MeetApplicationRepository applyRepo;
 	private LikeRepository likeRepo ;
 	private PostsRepository postRepo;
+	private ApplyLogRepository applyLogRepo;
 	
 	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
@@ -98,6 +102,11 @@ public class PostServiceImpl implements PostService {
 	@Autowired
 	public void setPostsRepository(PostsRepository postRepository) {
 		this.postRepo = postRepository;
+	}
+	
+	@Autowired
+	public void setApplyLogRepository(ApplyLogRepository applyLogRepository) {
+		this.applyLogRepo = applyLogRepository;
 	}
 	
 	 /**
@@ -313,16 +322,19 @@ public class PostServiceImpl implements PostService {
 				
 			
 			meet_id = meetRepo.save(createMeetDto.toEntity()).getId();
-			System.out.println(meet_id);
+			createMeetDto.setMeetId(meet_id);
+			
+
 			resultObj.put("result","true");
 			
 			addParticipant(createMeetDto.getOwner(),meet_id );
+			
+			postRepo.save(createMeetDto.toPostEntity());
 			
 
 			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
 		}
 		catch(Exception e) {
-			System.out.println(e);
     		resultObj.put("result","false");
     		resultObj.put("reason",e);
     		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
@@ -340,6 +352,22 @@ public class PostServiceImpl implements PostService {
 				.build());
 	}
 	
+	/*
+	 * 사용자가 모임의 방장인지 확인 여부 알려줌
+	 */
+	private boolean checkOwnerInMeet(long user_id, long meet_id) {
+		
+		Optional<Meeting> meet = meetRepo.findById(meet_id);
+		if(meet.isPresent()) {
+			if(meet.get().getOwner().equals(user_id))
+				return true ;
+			else
+				return false;
+		}
+		else {
+			return false;
+		}
+	}	
 	/**
 	 * 사용자 즐겨찾기 추가 삭제
 	 */
@@ -396,6 +424,43 @@ public class PostServiceImpl implements PostService {
 		
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 		
+	}
+	
+	/**
+	 * 신청 승인할지 여부 결정
+	 */
+	@Transactional
+	public ResponseEntity<JSONObject> decideApply(PostDecideApplyDto applyDto, String token) {
+		JSONObject resultObj = new JSONObject(); 
+		
+		
+		Optional<MeetApplication> apply = applyRepo.findById(applyDto.getApplyId());
+		if(apply.isPresent()) {
+				
+			applyLogRepo.save(ApplyLog.builder()
+					.appr(applyDto.isAppr())
+					.meet_id(apply.get().getMeetId())
+					.userId(apply.get().getUserId())
+					.refusalDec(applyDto.getRefusalDec())
+					.build());
+			
+			if(applyDto.isAppr() && checkOwnerInMeet(apply.get().getUserId(), apply.get().getMeetId() ) ) 
+				addParticipant(apply.get().getUserId(), apply.get().getMeetId());
+				
+			
+			//신청 완료된건 삭제
+			applyLogRepo.deleteById(apply.get().getId());
+			
+			resultObj.put("result","true");
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+
+			}
+		
+		resultObj.put("result","false");
+		resultObj.put("reason","잘못된 요청입니다.");
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+			
+
 	}
 	
 	
@@ -461,7 +526,9 @@ public class PostServiceImpl implements PostService {
      * 즐겨찾기한 모임 검색
      * 마이페이지에서 호출
      * */
-	public List<MinMeetVo> getMinFavoriteMeet(String token) {
+	public ResponseEntity<JSONObject> getMinFavoriteMeet(String token) {
+		
+		JSONObject resultObj = new JSONObject(); 
 		
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
 		for(Long id :getFavorite(commonUtil.getUserId(token))) {
@@ -483,15 +550,18 @@ public class PostServiceImpl implements PostService {
 		    
 		 }
 		
+		resultObj.put("content", list);
 		
-		return list ;
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 	}
 	
     /**
      * 좋아요한 모임 검색
      * 마이페이지에서 호출
      * */
-	public List<MinMeetVo> getMinLikeMeet(String token) {
+	public ResponseEntity<JSONObject> getMinLikeMeet(String token) {
+		
+		JSONObject resultObj = new JSONObject(); 
 		
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
 		for(Like like : likeRepo.findAllByUserId(commonUtil.getUserId(token))) {
@@ -513,15 +583,18 @@ public class PostServiceImpl implements PostService {
 		    
 		 }
 		
+		resultObj.put("content", list);
 		
-		return list ;
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 	}
 	
     /**
      * 참가중인 모임 검색
      * -모임페이지에서 호출됨
      * */
-	public List<MinMeetVo> getMinJoinMeet(String token) {
+	public ResponseEntity<JSONObject> getMinJoinMeet(String token) {
+		
+		JSONObject resultObj = new JSONObject(); 
 		
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
 		for(Participant p : participantRepo.findByUserId(commonUtil.getUserId(token))) {
@@ -543,15 +616,18 @@ public class PostServiceImpl implements PostService {
 		    
 		 }
 		
+		resultObj.put("content", list);
 		
-		return list ;
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 	}
 	
     /**
      * 개설한 모임 검색
      * -모임페이지에서 호출됨
      * */
-	public List<MinMeetVo> getMinCreateMeet(String token) {
+	public ResponseEntity<JSONObject> getMinCreateMeet(String token) {
+		
+		JSONObject resultObj = new JSONObject(); 
 		
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
 		for(Meeting meet : meetRepo.findByOwner(commonUtil.getUserId(token))) {
@@ -569,8 +645,9 @@ public class PostServiceImpl implements PostService {
 		    
 		 }
 		
+		resultObj.put("content", list);
 		
-		return list ;
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 	}
 	
     /**
@@ -603,7 +680,7 @@ public class PostServiceImpl implements PostService {
 			}
 		 }
 		
-		resultObj.put("result", list);
+		resultObj.put("content", list);
 		
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 	}

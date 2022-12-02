@@ -34,13 +34,13 @@ public interface PostService {
 	
 	public ResponseEntity<JSONObject> updateMeeting(UpdateMeetDto putMeetDto, String token);
 	
-	public List<MinMeetVo> getMinFavoriteMeet(String token);
+	public ResponseEntity<JSONObject> getMinFavoriteMeet(String token);
 	
-	public List<MinMeetVo> getMinLikeMeet(String token);
+	public ResponseEntity<JSONObject> getMinLikeMeet(String token);
 	
-	public List<MinMeetVo> getMinJoinMeet(String token);
+	public ResponseEntity<JSONObject> getMinJoinMeet(String token);
 	
-	public List<MinMeetVo> getMinCreateMeet(String token);
+	public ResponseEntity<JSONObject> getMinCreateMeet(String token);
 	
 	public ResponseEntity<JSONObject> getMinApplyMeet(String token);
 }

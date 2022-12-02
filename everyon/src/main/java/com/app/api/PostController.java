@@ -97,22 +97,22 @@ public class PostController {
 	 
 	 //
 	 @GetMapping("/min/favorite")
-	 public List<MinMeetVo> minFavoriteMeet( HttpServletRequest req) {
+	 public ResponseEntity<JSONObject> minFavoriteMeet( HttpServletRequest req) {
 	    	return postService.getMinFavoriteMeet(req.getHeader("Authorization"));
 	 }
 	 
 	 @GetMapping("/min/like")
-	 public List<MinMeetVo> minlikeMeet( HttpServletRequest req) {
+	 public ResponseEntity<JSONObject> minlikeMeet( HttpServletRequest req) {
 	    	return postService.getMinLikeMeet(req.getHeader("Authorization"));
 	 }
 	 
 	 @GetMapping("/min/joinmeet")
-	 public List<MinMeetVo> minjoinMeet( HttpServletRequest req) {
+	 public ResponseEntity<JSONObject> minjoinMeet( HttpServletRequest req) {
 	    	return postService.getMinJoinMeet(req.getHeader("Authorization"));
 	 }
 	 
 	 @GetMapping("/min/createmeet")
-	 public List<MinMeetVo> minCreateMeet( HttpServletRequest req) {
+	 public ResponseEntity<JSONObject> minCreateMeet( HttpServletRequest req) {
 	    	return postService.getMinCreateMeet(req.getHeader("Authorization"));
 	 }
 	 
