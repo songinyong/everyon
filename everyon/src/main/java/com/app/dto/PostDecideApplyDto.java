@@ -1,6 +1,6 @@
 package com.app.dto;
 
-import com.domain.jpa.ApplyLog;
+import com.domain.jpa.log.ApplyLog;
 
 import lombok.Getter;
 

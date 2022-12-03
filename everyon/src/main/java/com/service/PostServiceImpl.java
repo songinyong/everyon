@@ -17,13 +17,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DelUserDrawDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
 import com.app.dto.PostDecideApplyDto;
 import com.app.dto.UpdateMeetDto;
-import com.app.vo.DetailViewUserVO;
+import com.app.vo.DecideApplyVo;
+import com.app.vo.DetailViewUserVo;
+import com.app.vo.ManageUserVo;
 import com.app.vo.MinMeetVo;
-import com.domain.jpa.ApplyLog;
 import com.domain.jpa.CustomUser;
 import com.domain.jpa.Favorite;
 import com.domain.jpa.Like;
@@ -31,6 +33,8 @@ import com.domain.jpa.MeetApplication;
 import com.domain.jpa.Meeting;
 import com.domain.jpa.Participant;
 import com.domain.jpa.Posts;
+import com.domain.jpa.log.ApplyLog;
+import com.domain.jpa.log.ManageUserLog;
 import com.domain.jpa.repository.FavoriteRepository;
 import com.domain.jpa.repository.LikeRepository;
 import com.domain.jpa.repository.MeetApplicationRepository;
@@ -39,6 +43,7 @@ import com.domain.jpa.repository.ParticipantRepository;
 import com.domain.jpa.repository.PostsRepository;
 import com.domain.jpa.repository.UserRepository;
 import com.domain.jpa.repository.log.ApplyLogRepository;
+import com.domain.jpa.repository.log.ManageUserLogRepository;
 import com.util.CommonUtil;
 
 @Service
@@ -53,6 +58,7 @@ public class PostServiceImpl implements PostService {
 	private LikeRepository likeRepo ;
 	private PostsRepository postRepo;
 	private ApplyLogRepository applyLogRepo;
+	private ManageUserLogRepository manageLogRepo;
 	
 	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
@@ -108,7 +114,10 @@ public class PostServiceImpl implements PostService {
 	public void setApplyLogRepository(ApplyLogRepository applyLogRepository) {
 		this.applyLogRepo = applyLogRepository;
 	}
-	
+	@Autowired
+	public void setManageUserLogRepository(ManageUserLogRepository manageLogRepository) {
+		this.manageLogRepo = manageLogRepository;
+	}	
 	 /**
 	  * 메인화면에 출력되는 게시글 목록 
 	  * */
@@ -167,7 +176,7 @@ public class PostServiceImpl implements PostService {
 		}
 		//가입한후
 		else {
-			List<DetailViewUserVO> detailUser = new ArrayList<DetailViewUserVO>();
+			List<DetailViewUserVo> detailUser = new ArrayList<DetailViewUserVo>();
 			Optional<Posts> post = postRepo.findByMeetId(meet_id);
 			
 			for(Long u : getMeetUser(meet_id)) {
@@ -175,7 +184,7 @@ public class PostServiceImpl implements PostService {
 				Optional<CustomUser> user = userRepo.findById(u);
 				
 				if(user.isPresent())
-				detailUser.add(DetailViewUserVO.builder()
+				detailUser.add(DetailViewUserVo.builder()
 						.image(commonUtil.getImageLink(user.get().getImage()))
 						.nickname(user.get().getNickname())
 						.user_id(u).build());
@@ -407,13 +416,45 @@ public class PostServiceImpl implements PostService {
 			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 		}
 		Long user_id = commonUtil.getUserId(token);	
+		
+		Optional<Meeting> meet = meetRepo.findById(applyDto.getMeet_id());
+		
+		if(meet.isEmpty()) {
+			resultObj.put("result","false");
+			resultObj.put("reason","잘못된 모임입니다");
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+		}
+		
+		if(meet.get().getMax_people() <= meet.get().getParticipant_count() ) {
+			resultObj.put("result","false");
+			resultObj.put("reason","모임 최대 정원에 도달했습니다.");
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+		}
+		
 		if(applyRepo.findByUserIdAndMeetId(user_id, applyDto.getMeet_id()).isEmpty()) {
-		
-			applyDto.setUserId(user_id);
-			applyRepo.save(applyDto.toEntity());
 			
-			resultObj.put("result","true");
-		
+			if(meet.get().getRoom_code().equals("pub")) {
+				participantRepo.save(Participant.builder()
+						.meet_id(applyDto.getMeet_id())
+						.user_id(user_id)
+						.build());
+				
+				meet.get().increateParticipant_count();
+				meetRepo.save(meet.get());
+				
+		    }
+			else if(meet.get().getRoom_code().equals("per")) {
+				applyDto.setUserId(user_id);
+				applyRepo.save(applyDto.toEntity());
+			}
+			
+			//후에 방 코드가 추가된다면 여기
+			else {
+				
+			}
+			
+			
+			
 		}
 		else {
 			
@@ -422,12 +463,51 @@ public class PostServiceImpl implements PostService {
 			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 		}
 		
+		
+		resultObj.put("result","true");
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 		
 	}
 	
+	
+	
+	/**
+	 * 특정 모임에 등록된 신청 목록 조회
+	 * 12/02 처음 메서드 생성
+	 * 방장만 호출 가능
+	 */
+	public ResponseEntity<JSONObject> findApplyList(Long meet_id, String token) {
+		Optional<Meeting> meet = meetRepo.findById(meet_id);
+		List<DecideApplyVo> list = new ArrayList<DecideApplyVo>();
+		JSONObject resultObj = new JSONObject(); 
+		
+		if(meet.isPresent()) {
+			if(meet.get().getOwner().equals(commonUtil.getUserId(token))) {
+				for(MeetApplication m : applyRepo.findByMeetId(meet_id)) {
+					list.add(DecideApplyVo.builder()
+							.apply_id(m.getId())
+							.meet_id(meet_id)
+							.createdTime(m.getCreatedDate())
+							.user_id(m.getUserId())
+							.description(m.getDescription())
+							.build());
+				}
+				
+				
+			}
+			
+		}
+		
+		resultObj.put("content",list);
+		
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+	}
+	
+	
 	/**
 	 * 신청 승인할지 여부 결정
+	 * 12/02 처음 메서드 생성
+	 * 방장만 호출 가능
 	 */
 	@Transactional
 	public ResponseEntity<JSONObject> decideApply(PostDecideApplyDto applyDto, String token) {
@@ -435,26 +515,47 @@ public class PostServiceImpl implements PostService {
 		
 		
 		Optional<MeetApplication> apply = applyRepo.findById(applyDto.getApplyId());
+		Optional<Meeting> meet = meetRepo.findById(apply.get().getMeetId());
+		
 		if(apply.isPresent()) {
+			
+			if(meet.isPresent()) {
 				
-			applyLogRepo.save(ApplyLog.builder()
-					.appr(applyDto.isAppr())
-					.meet_id(apply.get().getMeetId())
-					.userId(apply.get().getUserId())
-					.refusalDec(applyDto.getRefusalDec())
-					.build());
-			
-			if(applyDto.isAppr() && checkOwnerInMeet(apply.get().getUserId(), apply.get().getMeetId() ) ) 
-				addParticipant(apply.get().getUserId(), apply.get().getMeetId());
+				if(!checkOwnerInMeet(commonUtil.getUserId(token), apply.get().getMeetId() )) {
+					resultObj.put("result","false");
+					resultObj.put("reason","방장만 API 호출이 가능합니다.");
+					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+				}
 				
-			
-			//신청 완료된건 삭제
-			applyLogRepo.deleteById(apply.get().getId());
-			
-			resultObj.put("result","true");
-			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
-
+				if(meet.get().getMax_people() <= meet.get().getParticipant_count() ) {
+					resultObj.put("result","false");
+					resultObj.put("reason","모임 최대 정원에 도달했습니다.");
+					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+				}
+				
+				if(applyDto.isAppr() && !checkOwnerInMeet(apply.get().getUserId(), apply.get().getMeetId() )  ) {
+					addParticipant(apply.get().getUserId(), apply.get().getMeetId());
+					
+					applyLogRepo.save(ApplyLog.builder()
+							.appr(applyDto.isAppr())
+							.meet_id(apply.get().getMeetId())
+							.userId(apply.get().getUserId())
+							.refusalDec(applyDto.getRefusalDec())
+							.build());
+					
+					//신청 완료된건 삭제
+					applyRepo.deleteById(apply.get().getId());
+					
+					meet.get().increateParticipant_count();
+					meetRepo.save(meet.get());
+					
+					
+					resultObj.put("result","true");
+					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+				}
+				
 			}
+		}
 		
 		resultObj.put("result","false");
 		resultObj.put("reason","잘못된 요청입니다.");
@@ -531,7 +632,7 @@ public class PostServiceImpl implements PostService {
 		JSONObject resultObj = new JSONObject(); 
 		
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
-		for(Long id :getFavorite(commonUtil.getUserId(token))) {
+		for(Long id : getFavorite(commonUtil.getUserId(token))) {
 			
 		    Optional<Meeting> meet = meetRepo.findById(id);
 		    if(meet.isPresent()) {
@@ -684,4 +785,85 @@ public class PostServiceImpl implements PostService {
 		
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 	}
+	
+	/**
+	 * 회원관리 기능
+	 * 22/12/03 처음 메서드 생성
+	 * - 방장일 경우 방장을 제외한 유저들의 목록을 보여줌
+	 * */
+	public ResponseEntity<JSONObject> findUsersExceptOwner(Long meet_id, String token) {
+		JSONObject resultObj = new JSONObject(); 
+		List<ManageUserVo> manageUser = new ArrayList<ManageUserVo>();
+		if(checkOwnerInMeet(commonUtil.getUserId(token), meet_id )) {
+			List<Long> users = getMeetUser(meet_id);
+			users.remove((Object) commonUtil.getUserId(token));
+			
+			for(Long u : users) {
+				Optional<CustomUser> user = userRepo.findById(u);
+				
+				if(user.isPresent())
+					manageUser.add(ManageUserVo.builder()
+						.image(commonUtil.getImageLink(user.get().getImage()))
+						.nickname(user.get().getNickname())
+						.user_id(u).build());
+			}
+			
+		}
+		
+		resultObj.put("content", manageUser);
+		
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+		
+	}
+	
+	/**
+	 * 회원관리 기능
+	 * 22/12/03 처음 메서드 생성
+	 * - 방장일 경우 방장을 제외한 유저의 상태를 변경가능
+	 * 0: 탈퇴처리
+	 * -후에 기능 업데이트 가능
+	 * */
+	public ResponseEntity<JSONObject> manageUserDrawUser(DelUserDrawDto drawDto, String token) {
+		JSONObject resultObj = new JSONObject(); 
+		if(checkOwnerInMeet(commonUtil.getUserId(token), drawDto.getMeetId())) {
+			
+			Optional<Participant> member = participantRepo.findByUserIdAndMeetId(drawDto.getUserId(), drawDto.getMeetId());
+			Optional<Meeting> meet = meetRepo.findById(drawDto.getMeetId());
+			
+			if(!checkOwnerInMeet(drawDto.getUserId(), drawDto.getMeetId()) && member.isPresent() && meet.isPresent()) {
+				manageLogRepo.save(ManageUserLog.builder()
+						.meet_id(drawDto.getMeetId())
+						.userId(drawDto.getUserId())
+						.status_code(0)
+						.build());
+				
+				participantRepo.delete(member.get());
+				
+				meet.get().decreaseParticipant_count();
+				meetRepo.save(meet.get());
+				
+				resultObj.put("result", true);
+				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+			}
+			else {
+				resultObj.put("result", false);
+				resultObj.put("reason", "요청 변수가 잘못 입력되었습니다.");
+				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+			}
+			
+
+			
+		}
+		resultObj.put("result", false);
+		resultObj.put("reason", "방장만 요청 가능합니다.");
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+		
+	}
+	
+	
+	/**
+	 * 모임 삭제
+	 * */
+	
+	
 }

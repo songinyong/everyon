@@ -14,5 +14,7 @@ public interface MeetApplicationRepository extends JpaRepository<MeetApplication
 
 	public List<Optional<MeetApplication>> findByUserId(Long user_id) ;
 	
+	public List<MeetApplication> findByMeetId(Long meet_id);
+	
 	public List<Optional<MeetApplication>> findByUserIdAndMeetId(Long user_id, Long meet_id);
 }

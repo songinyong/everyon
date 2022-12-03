@@ -21,9 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DelUserDrawDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
+import com.app.dto.PostDecideApplyDto;
 import com.app.dto.UpdateMeetDto;
+import com.app.vo.DecideApplyVo;
 import com.app.vo.MinMeetVo;
 import com.service.PostService;
 
@@ -119,6 +122,26 @@ public class PostController {
 	 @GetMapping("/min/applymeet")
 	 public ResponseEntity<JSONObject> minApplyMeet( HttpServletRequest req) {
 	    	return postService.getMinApplyMeet(req.getHeader("Authorization"));
+	 }
+	 
+	 @GetMapping("/manage/apply/{meet_id}")
+	 public ResponseEntity<JSONObject> manageApplyList(@PathVariable Long meet_id, HttpServletRequest req) {
+	    	return postService.findApplyList(meet_id, req.getHeader("Authorization"));
+	 }
+	 
+	 @PostMapping("/manage/decide/apply")
+	 public ResponseEntity<JSONObject> decideApply(@RequestBody PostDecideApplyDto applyDto, HttpServletRequest req) {
+		 return postService.decideApply(applyDto, req.getHeader("Authorization"));
+	 }
+	 
+	 @GetMapping("/manage/users/{meet_id}")
+	 public ResponseEntity<JSONObject> findUsersExceptOwner(@PathVariable Long meet_id, HttpServletRequest req) {
+		 return postService.findUsersExceptOwner(meet_id, req.getHeader("Authorization"));
+	 }
+	 
+	 @PutMapping("/manage/users")
+	 public ResponseEntity<JSONObject> manageUserDrawUser(@RequestBody DelUserDrawDto drawDto, HttpServletRequest req) {
+		 return postService.manageUserDrawUser(drawDto, req.getHeader("Authorization"));
 	 }
 	 
 }

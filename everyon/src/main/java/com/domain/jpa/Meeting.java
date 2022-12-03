@@ -77,6 +77,14 @@ public class Meeting extends BaseTimeEntity {
 		like_count--;
 	}
 	
+	public void increateParticipant_count() {
+		participant_count++;
+	}
+	
+	public void decreaseParticipant_count() {
+		participant_count--;
+	}
+	
 	public void updateInfo(UpdateMeetDto putMeetDto) {
 		if(putMeetDto.getRoom_code() != null)
 			this.room_code = putMeetDto.getRoom_code();
