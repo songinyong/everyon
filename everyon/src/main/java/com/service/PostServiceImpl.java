@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DelMeetDto;
 import com.app.dto.DelUserDrawDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
@@ -34,6 +35,7 @@ import com.domain.jpa.Meeting;
 import com.domain.jpa.Participant;
 import com.domain.jpa.Posts;
 import com.domain.jpa.log.ApplyLog;
+import com.domain.jpa.log.EndMeetLog;
 import com.domain.jpa.log.ManageUserLog;
 import com.domain.jpa.repository.FavoriteRepository;
 import com.domain.jpa.repository.LikeRepository;
@@ -43,6 +45,7 @@ import com.domain.jpa.repository.ParticipantRepository;
 import com.domain.jpa.repository.PostsRepository;
 import com.domain.jpa.repository.UserRepository;
 import com.domain.jpa.repository.log.ApplyLogRepository;
+import com.domain.jpa.repository.log.EndMeetLogRepository;
 import com.domain.jpa.repository.log.ManageUserLogRepository;
 import com.util.CommonUtil;
 
@@ -59,6 +62,7 @@ public class PostServiceImpl implements PostService {
 	private PostsRepository postRepo;
 	private ApplyLogRepository applyLogRepo;
 	private ManageUserLogRepository manageLogRepo;
+	private EndMeetLogRepository endMeetLogRepo;
 	
 	//user 아이디 기준 즐겨찾기한 모음 캐시용
 	private HashMap<Long, List<Long>> usersFavorite = new HashMap<Long, List<Long>>();
@@ -117,7 +121,12 @@ public class PostServiceImpl implements PostService {
 	@Autowired
 	public void setManageUserLogRepository(ManageUserLogRepository manageLogRepository) {
 		this.manageLogRepo = manageLogRepository;
-	}	
+	}
+	@Autowired
+	public void setEndMeetLogRepository(EndMeetLogRepository endMeetLogRepository) {
+		this.endMeetLogRepo = endMeetLogRepository;
+	}
+	
 	 /**
 	  * 메인화면에 출력되는 게시글 목록 
 	  * */
@@ -171,6 +180,8 @@ public class PostServiceImpl implements PostService {
 					.participant_count(meet.get().getParticipant_count())
 					.title(meet.get().getTitle())
 					.room_code(meet.get().getRoom_code())
+					.description(meet.get().getDescription())
+					.like_count(meet.get().getLike_count())	
 					.meet_id(meet_id)
 					.build();
 		}
@@ -442,6 +453,8 @@ public class PostServiceImpl implements PostService {
 				meet.get().increateParticipant_count();
 				meetRepo.save(meet.get());
 				
+				updateMeetUser(meet.get().getId());
+				
 		    }
 			else if(meet.get().getRoom_code().equals("per")) {
 				applyDto.setUserId(user_id);
@@ -548,7 +561,7 @@ public class PostServiceImpl implements PostService {
 					
 					meet.get().increateParticipant_count();
 					meetRepo.save(meet.get());
-					
+					updateMeetUser(meet.get().getId());
 					
 					resultObj.put("result","true");
 					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
@@ -640,6 +653,8 @@ public class PostServiceImpl implements PostService {
 		    	MinMeetVo vo = MinMeetVo.builder()
 						.meet_id(id)
 						.title(meet.get().getTitle())
+						.max_people(meet.get().getMax_people())
+						.participant_count(meet.get().getParticipant_count())
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -673,6 +688,8 @@ public class PostServiceImpl implements PostService {
 		    	MinMeetVo vo = MinMeetVo.builder()
 						.meet_id(meet.get().getId())
 						.title(meet.get().getTitle())
+						.max_people(meet.get().getMax_people())
+						.participant_count(meet.get().getParticipant_count())
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -706,6 +723,8 @@ public class PostServiceImpl implements PostService {
 		    	MinMeetVo vo = MinMeetVo.builder()
 						.meet_id(meet.get().getId())
 						.title(meet.get().getTitle())
+						.max_people(meet.get().getMax_people())
+						.participant_count(meet.get().getParticipant_count())
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -736,6 +755,8 @@ public class PostServiceImpl implements PostService {
 		    MinMeetVo vo = MinMeetVo.builder()
 						.meet_id(meet.getId())
 						.title(meet.getTitle())
+						.max_people(meet.getMax_people())
+						.participant_count(meet.getParticipant_count())
 						.build();
 		    	
 		    if(meet.getMain_image_link() != null && !meet.getMain_image_link().equals("") )
@@ -770,6 +791,8 @@ public class PostServiceImpl implements PostService {
 		    	MinMeetVo vo = MinMeetVo.builder()
 						.meet_id(meet.get().getId())
 						.title(meet.get().getTitle())
+						.max_people(meet.get().getMax_people())
+						.participant_count(meet.get().getParticipant_count())
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -863,7 +886,43 @@ public class PostServiceImpl implements PostService {
 	
 	/**
 	 * 모임 삭제
+	 * 22/12/03 처음 메서드 생성
+	 * -방장일 경우 모임 삭제
 	 * */
+	public ResponseEntity<JSONObject> deleteMeet(Long meetId, String token) {
+		JSONObject resultObj = new JSONObject(); 
+		Optional<Meeting> meet = meetRepo.findById(meetId);
+		
+		if(meet.isPresent()) {
+			if(checkOwnerInMeet(commonUtil.getUserId(token), meetId)) {
+				
+				endMeetLogRepo.save(new EndMeetLog(meet.get()));
+				//applyRepo.deleteAllByMeetId(meetId);
+				//participantRepo.deleteAllByMeetId(meetId);
+				meetRepo.deleteById(meetId);
+				
+				resultObj.put("result", true);
+				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+				
+				
+			}
+			
+			
+		}
+		
+		resultObj.put("result", false);
+		resultObj.put("reason", "잘못된 요청입니다.");
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+	}
+	
+	/**
+	 * 모임 나가기
+	 * 
+	 * */
+	
+	/**
+	 * 모임가입 신청 취소하기
+	 */
 	
 	
 }

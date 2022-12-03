@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DelMeetDto;
 import com.app.dto.DelUserDrawDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
@@ -56,5 +57,7 @@ public interface PostService {
 	public ResponseEntity<JSONObject> findUsersExceptOwner(Long meet_id, String token);
 	
 	public ResponseEntity<JSONObject> manageUserDrawUser(DelUserDrawDto drawDto, String token);
+	
+	public ResponseEntity<JSONObject> deleteMeet(Long meetId, String token) ;
 	
 }

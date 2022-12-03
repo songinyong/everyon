@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.dto.ApplyMeetDto;
 import com.app.dto.CreateMeetDto;
+import com.app.dto.DelMeetDto;
 import com.app.dto.DelUserDrawDto;
 import com.app.dto.DetailMeetDto;
 import com.app.dto.MainMeetDto;
@@ -142,6 +144,10 @@ public class PostController {
 	 @PutMapping("/manage/users")
 	 public ResponseEntity<JSONObject> manageUserDrawUser(@RequestBody DelUserDrawDto drawDto, HttpServletRequest req) {
 		 return postService.manageUserDrawUser(drawDto, req.getHeader("Authorization"));
+	 }
+	 @DeleteMapping("/delete/meet/{meet_id}")
+	 public ResponseEntity<JSONObject> deleteMeet(@PathVariable Long meet_id, HttpServletRequest req) {
+		 return postService.deleteMeet(meet_id, req.getHeader("Authorization"));
 	 }
 	 
 }
