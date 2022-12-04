@@ -168,11 +168,11 @@ public class PostServiceImpl implements PostService {
 	@Transactional
     public DetailMeetDto getDetailMeeting(Long meet_id, String token) {
 		Optional<Meeting> meet = meetRepo.findById(meet_id);
-		
+		Long userId = commonUtil.getUserId(token);
 		
 		//가입하기전일때
 		if(!participantRepo.findByMeetId(meet_id).stream()
-	            .anyMatch(p -> p.getUserId().equals(commonUtil.getUserId(token))) ) {
+	            .anyMatch(p -> p.getUserId().equals(userId)) ) {
 			return DetailMeetDto.builder()
 					.main_image(commonUtil.getImageLink(meet.get().getMain_image_link()))
 					.category_code(meet.get().getCategory())
@@ -183,6 +183,9 @@ public class PostServiceImpl implements PostService {
 					.description(meet.get().getDescription())
 					.like_count(meet.get().getLike_count())	
 					.meet_id(meet_id)
+					.owner(meet.get().getOwner())
+					.favorite_check(favoriteRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
+					.like_check(likeRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
 					.build();
 		}
 		//가입한후
@@ -212,6 +215,9 @@ public class PostServiceImpl implements PostService {
 					.join_list(detailUser)
 					.meet_id(meet_id)
 					.description(meet.get().getDescription())
+					.owner(meet.get().getOwner())
+					.favorite_check(favoriteRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
+					.like_check(likeRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
 					.build();
 			
 			if(post.isPresent()) {
