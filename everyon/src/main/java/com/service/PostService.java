@@ -60,4 +60,8 @@ public interface PostService {
 	
 	public ResponseEntity<JSONObject> deleteMeet(Long meetId, String token) ;
 	
+	public ResponseEntity<JSONObject> outMeet(Long meetId, String token);
+	
+	public ResponseEntity<JSONObject> cancelApply(Long meetId, String token);
+	
 }

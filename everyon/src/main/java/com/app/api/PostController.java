@@ -149,5 +149,14 @@ public class PostController {
 	 public ResponseEntity<JSONObject> deleteMeet(@PathVariable Long meet_id, HttpServletRequest req) {
 		 return postService.deleteMeet(meet_id, req.getHeader("Authorization"));
 	 }
+	 @DeleteMapping("/delete/meetout/{meet_id}")
+	 public ResponseEntity<JSONObject> outMeet(@PathVariable Long meet_id, HttpServletRequest req) {
+		 return postService.outMeet(meet_id, req.getHeader("Authorization"));
+	 }
+	 @DeleteMapping("/delete/apply/{meet_id}")
+	 public ResponseEntity<JSONObject> cancelMeet(@PathVariable Long meet_id, HttpServletRequest req) {
+		 return postService.cancelApply(meet_id, req.getHeader("Authorization"));
+	 }
+	 
 	 
 }

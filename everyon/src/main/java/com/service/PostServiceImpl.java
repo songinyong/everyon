@@ -917,12 +917,69 @@ public class PostServiceImpl implements PostService {
 	
 	/**
 	 * 모임 나가기
-	 * 
+	 * 22/12/04 처음 메서드 생성
+	 * 방장일 경우 호출 안됨
 	 * */
+	public ResponseEntity<JSONObject> outMeet(Long meetId, String token) {
+		JSONObject resultObj = new JSONObject(); 
+		Optional<Meeting> meet = meetRepo.findById(meetId);
+		
+		if(meet.isPresent()) {
+			if(!checkOwnerInMeet(commonUtil.getUserId(token), meetId)) {
+				
+				Optional<Participant> participant = participantRepo.findByUserIdAndMeetId(commonUtil.getUserId(token), meetId);
+				
+				if(participant.isPresent()) {
+					participantRepo.delete(participant.get());
+					//applyRepo.deleteAllByMeetId(meetId);
+					//participantRepo.deleteAllByMeetId(meetId);
+					meet.get().decreaseParticipant_count();
+					meetRepo.save(meet.get());
+					resultObj.put("result", true);
+					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+				}
+				
+
+			}
+
+			
+		}
+		
+		resultObj.put("result", false);
+		resultObj.put("reason", "잘못된 요청입니다.");
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+	}
+	
 	
 	/**
 	 * 모임가입 신청 취소하기
 	 */
-	
+	public ResponseEntity<JSONObject> cancelApply(Long meetId, String token) {
+		JSONObject resultObj = new JSONObject(); 
+		Optional<Meeting> meet = meetRepo.findById(meetId);
+		
+		if(meet.isPresent()) {
+			if(!checkOwnerInMeet(commonUtil.getUserId(token), meetId)) {
+				
+				List<Optional<MeetApplication>> apply = applyRepo.findByUserIdAndMeetId(commonUtil.getUserId(token), meetId);
+				
+				if(apply.get(0).isPresent()) {
+				
+
+					applyRepo.delete(apply.get(0).get());
+					resultObj.put("result", true);
+					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+				
+				}
+				
+			}
+			
+			
+		}
+		
+		resultObj.put("result", false);
+		resultObj.put("reason", "잘못된 요청입니다.");
+		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+	}
 	
 }

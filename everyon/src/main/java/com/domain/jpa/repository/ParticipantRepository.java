@@ -18,4 +18,6 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long>{
 	public Optional<Participant> findByUserIdAndMeetId(Long user_id, Long meet_id) ;
 	
 	public void deleteAllByMeetId(Long meet_id);
+	
+	public void deleteByUserIdAndMeetId(Long user_id, Long meet_id);
 }

@@ -19,4 +19,6 @@ public interface MeetApplicationRepository extends JpaRepository<MeetApplication
 	public List<Optional<MeetApplication>> findByUserIdAndMeetId(Long user_id, Long meet_id);
 	
 	public void deleteAllByMeetId(Long meet_id);
+	
+	public void deleteByUserIdAndMeetId(Long user_id, Long meet_id);
 }
