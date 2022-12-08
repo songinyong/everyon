@@ -88,7 +88,7 @@ public class PostController {
 	 
 	 //meet_id기준 세부 정보 검색
 	 @GetMapping("/meet/detailview/{meet_id}")
-	 public DetailMeetDto detailView(@PathVariable Long meet_id,HttpServletRequest req) {
+	 public ResponseEntity<JSONObject> detailView(@PathVariable Long meet_id,HttpServletRequest req) {
 	    	return postService.getDetailMeeting(meet_id, req.getHeader("Authorization"));
 	    	
 	    	

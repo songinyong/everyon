@@ -19,9 +19,10 @@ public class MainMeetDto {
 	private int like_count;
 	private String main_image;	
 	private String title;
-	
 	private String category;
 	private boolean favorite ;
+	private boolean owner_check;
+	private boolean join_check;
 	
 	private List<String> user_images ;
 	
@@ -34,6 +35,8 @@ public class MainMeetDto {
 		this.main_image = entity.getMain_image_link();
 		this.title = entity.getTitle();
 		this.favorite = false ;
+		this.owner_check = false;
+		this.join_check = false;
 		this.category = entity.getCategory();
 	}
 	
@@ -47,5 +50,13 @@ public class MainMeetDto {
 	
 	public void setMainImage(String image) {
 		this.main_image = image;
+	}
+	
+	public void setOwnerCheck() {
+		this.owner_check = !this.owner_check;
+	}
+	
+	public void setJoinCheck() {
+		this.join_check = !this.join_check;
 	}
 }

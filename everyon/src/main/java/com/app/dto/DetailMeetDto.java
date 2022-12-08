@@ -30,9 +30,11 @@ public class DetailMeetDto {
 	private Long owner;
 	private boolean favorite_check ;
 	private boolean like_check;
+	private boolean owner_check;
+	private boolean join_check;
 	
 	@Builder
-	public DetailMeetDto(String room_code, int max_people, String main_image, String title, String description, String  category_code, Long meet_id, String meet_url, String open_url ,int	like_count, List<DetailViewUserVo> join_list, int participant_count, Long owner, boolean favorite_check, boolean like_check) {
+	public DetailMeetDto(String room_code, int max_people, String main_image, String title, String description, String  category_code, Long meet_id, String meet_url, String open_url ,int	like_count, List<DetailViewUserVo> join_list, int participant_count, Long owner, boolean favorite_check, boolean like_check,boolean join_check) {
 		this.room_code = room_code;
 		this.max_people = max_people;
 		this.main_image = main_image;
@@ -49,9 +51,11 @@ public class DetailMeetDto {
 		this.owner = owner;
 		this.favorite_check = favorite_check;
 		this.like_check = like_check;
+		this.owner_check = false;
+		this.join_check = join_check;
 	}
 	
-	
+
 	
 	
 }

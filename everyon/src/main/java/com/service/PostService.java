@@ -34,7 +34,7 @@ public interface PostService {
 	
 	public ResponseEntity<JSONObject> convertLike(String token, Long meet_id);
 	
-	public DetailMeetDto getDetailMeeting(Long meet_id, String token);
+	public ResponseEntity<JSONObject> getDetailMeeting(Long meet_id, String token);
 	
 	public ResponseEntity<JSONObject> updateMeeting(UpdateMeetDto putMeetDto, String token);
 	

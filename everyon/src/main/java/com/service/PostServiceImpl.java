@@ -49,6 +49,8 @@ import com.domain.jpa.repository.log.EndMeetLogRepository;
 import com.domain.jpa.repository.log.ManageUserLogRepository;
 import com.util.CommonUtil;
 
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Service
 public class PostServiceImpl implements PostService {
 	
@@ -135,12 +137,14 @@ public class PostServiceImpl implements PostService {
 		
 		 Page<Meeting> meetList = meetRepo.findAll(pageRequest);
 		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
-		 
-		 List<Long> fv =  getFavorite(commonUtil.getUserId(token));
+		 Long userId = commonUtil.getUserId(token);
+		 List<Long> fv =  getFavorite(userId);
 		 
 		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
+		 dtoList.stream().filter(d -> d.getOwner().equals(userId)).forEach(d -> d.setOwnerCheck());
+		 dtoList.stream().filter(d -> getMeetUser(d.getMeet_id()).contains(userId)).forEach(d -> d.setJoinCheck());
   
-		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
+		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); } );
     	return dtoList;
     }
 	
@@ -153,10 +157,12 @@ public class PostServiceImpl implements PostService {
 		
 		 Page<Meeting> meetList = meetRepo.findMeetingByCategory(pageRequest, category);
 		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
-		 
-		 List<Long> fv =  getFavorite(commonUtil.getUserId(token));
+		 Long userId = commonUtil.getUserId(token);
+		 List<Long> fv =  getFavorite(userId);
 		 
 		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
+		 dtoList.stream().filter(d -> d.getOwner().equals(userId)).forEach(d -> d.setOwnerCheck());
+		 dtoList.stream().filter(d -> getMeetUser(d.getMeet_id()).contains(userId)).forEach(d -> d.setJoinCheck());
  
 		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
    	return dtoList;
@@ -166,14 +172,22 @@ public class PostServiceImpl implements PostService {
 	  * 세부화면에 출력되는 방 정보
 	  * */
 	@Transactional
-    public DetailMeetDto getDetailMeeting(Long meet_id, String token) {
+    public ResponseEntity<JSONObject> getDetailMeeting(Long meet_id, String token) {
 		Optional<Meeting> meet = meetRepo.findById(meet_id);
 		Long userId = commonUtil.getUserId(token);
+		JSONObject resultObj = new JSONObject(); 
 		
+		if(meet.isEmpty()) {
+			resultObj.put("result","false");
+			resultObj.put("reason","meet_id가 없습니다.");
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+		}
+
 		//가입하기전일때
 		if(!participantRepo.findByMeetId(meet_id).stream()
 	            .anyMatch(p -> p.getUserId().equals(userId)) ) {
-			return DetailMeetDto.builder()
+			
+			DetailMeetDto detailMeetDto = DetailMeetDto.builder()
 					.main_image(commonUtil.getImageLink(meet.get().getMain_image_link()))
 					.category_code(meet.get().getCategory())
 					.max_people(meet.get().getMax_people())
@@ -186,7 +200,15 @@ public class PostServiceImpl implements PostService {
 					.owner(meet.get().getOwner())
 					.favorite_check(favoriteRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
 					.like_check(likeRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
+					.join_check(false)
 					.build();
+			
+			if(meet.get().getOwner().equals(userId))
+				detailMeetDto.setOwner_check(true);
+			
+			resultObj.put("result","true");
+			resultObj.put("content",detailMeetDto);
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 		}
 		//가입한후
 		else {
@@ -218,6 +240,7 @@ public class PostServiceImpl implements PostService {
 					.owner(meet.get().getOwner())
 					.favorite_check(favoriteRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
 					.like_check(likeRepo.findByUserIdAndMeetId(userId, meet_id).isPresent())
+					.join_check(true)
 					.build();
 			
 			if(post.isPresent()) {
@@ -225,7 +248,12 @@ public class PostServiceImpl implements PostService {
 				detailMeetDto.setOpen_url(post.get().getOpen_url());
 			}
 			
-			return detailMeetDto;
+			if(meet.get().getOwner().equals(userId))
+				detailMeetDto.setOwner_check(true);
+			
+			resultObj.put("result","true");
+			resultObj.put("content",detailMeetDto);
+			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 		}
 		
 	}
@@ -343,6 +371,7 @@ public class PostServiceImpl implements PostService {
 			if(createMeetDto.getMax_people()<1) {
 				resultObj.put("result","false");
 				resultObj.put("reason","전체인원수는 1명 미만일 수 없습니다");
+				log.info("createMeet: 잘못된 API 호출");
 				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 			}
 				
@@ -362,7 +391,8 @@ public class PostServiceImpl implements PostService {
 		}
 		catch(Exception e) {
     		resultObj.put("result","false");
-    		resultObj.put("reason",e);
+    		resultObj.put("reason","알 수 없는 이유로 호출 에러 발생");
+    		log.error("createMeet:" + e);
     		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 		
 	    }
@@ -512,7 +542,6 @@ public class PostServiceImpl implements PostService {
 							.build());
 				}
 				
-				
 			}
 			
 		}
@@ -531,7 +560,6 @@ public class PostServiceImpl implements PostService {
 	@Transactional
 	public ResponseEntity<JSONObject> decideApply(PostDecideApplyDto applyDto, String token) {
 		JSONObject resultObj = new JSONObject(); 
-		
 		
 		Optional<MeetApplication> apply = applyRepo.findById(applyDto.getApplyId());
 		Optional<Meeting> meet = meetRepo.findById(apply.get().getMeetId());
@@ -580,7 +608,6 @@ public class PostServiceImpl implements PostService {
 		resultObj.put("reason","잘못된 요청입니다.");
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 			
-
 	}
 	
 	
@@ -590,10 +617,9 @@ public class PostServiceImpl implements PostService {
 	 */
 	@Transactional
 	public ResponseEntity<JSONObject> convertLike(String token, Long meet_id) {
+		
 		JSONObject resultObj = new JSONObject(); 
-		
 		Long user_id = commonUtil.getUserId(token);
-		
 
 		if(likeRepo.findByUserIdAndMeetId(user_id, meet_id).isPresent()) {
 			likeRepo.deleteByUserIdAndMeetId(user_id, meet_id);
@@ -636,11 +662,24 @@ public class PostServiceImpl implements PostService {
 		 List<Long> fv =  getFavorite(commonUtil.getUserId(token));
 		 
 		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
- 
 		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
    	return dtoList;
    }	
 	
+	
+	private List<DetailViewUserVo> getDetailViewUserList(Long meet_id) {
+    	List<DetailViewUserVo> detailUser = new ArrayList<DetailViewUserVo>();
+		for(Long u : getMeetUser(meet_id)) {
+			Optional<CustomUser> user = userRepo.findById(u);
+			
+			if(user.isPresent())
+			detailUser.add(DetailViewUserVo.builder()
+					.image(commonUtil.getImageLink(user.get().getImage()))
+					.nickname(user.get().getNickname())
+					.user_id(u).build());
+		}
+		return detailUser;
+	}
 	
     /**
      * 즐겨찾기한 모임 검색
@@ -649,9 +688,11 @@ public class PostServiceImpl implements PostService {
 	public ResponseEntity<JSONObject> getMinFavoriteMeet(String token) {
 		
 		JSONObject resultObj = new JSONObject(); 
-		
+		Long userId = commonUtil.getUserId(token);
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
-		for(Long id : getFavorite(commonUtil.getUserId(token))) {
+	    
+	    
+		for(Long id : getFavorite(userId)) {
 			
 		    Optional<Meeting> meet = meetRepo.findById(id);
 		    if(meet.isPresent()) {
@@ -661,6 +702,8 @@ public class PostServiceImpl implements PostService {
 						.title(meet.get().getTitle())
 						.max_people(meet.get().getMax_people())
 						.participant_count(meet.get().getParticipant_count())
+						.favorite_check(true)
+						.join_list(getDetailViewUserList(id))
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -684,9 +727,10 @@ public class PostServiceImpl implements PostService {
 	public ResponseEntity<JSONObject> getMinLikeMeet(String token) {
 		
 		JSONObject resultObj = new JSONObject(); 
+		Long userId = commonUtil.getUserId(token);
 		
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
-		for(Like like : likeRepo.findAllByUserId(commonUtil.getUserId(token))) {
+		for(Like like : likeRepo.findAllByUserId(userId)) {
 			
 		    Optional<Meeting> meet = meetRepo.findById(like.getMeetId());
 		    if(meet.isPresent()) {
@@ -696,6 +740,8 @@ public class PostServiceImpl implements PostService {
 						.title(meet.get().getTitle())
 						.max_people(meet.get().getMax_people())
 						.participant_count(meet.get().getParticipant_count())
+						.favorite_check(getFavorite(userId).contains(meet.get().getId()))
+						.join_list(getDetailViewUserList(meet.get().getId()))
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -719,9 +765,9 @@ public class PostServiceImpl implements PostService {
 	public ResponseEntity<JSONObject> getMinJoinMeet(String token) {
 		
 		JSONObject resultObj = new JSONObject(); 
-		
+		Long userId = commonUtil.getUserId(token);
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
-		for(Participant p : participantRepo.findByUserId(commonUtil.getUserId(token))) {
+		for(Participant p : participantRepo.findByUserId(userId)) {
 			
 		    Optional<Meeting> meet = meetRepo.findById(p.getMeetId());
 		    if(meet.isPresent()) {
@@ -731,6 +777,8 @@ public class PostServiceImpl implements PostService {
 						.title(meet.get().getTitle())
 						.max_people(meet.get().getMax_people())
 						.participant_count(meet.get().getParticipant_count())
+						.favorite_check(getFavorite(userId).contains(meet.get().getId()))
+						.join_list(getDetailViewUserList(meet.get().getId()))
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -754,15 +802,17 @@ public class PostServiceImpl implements PostService {
 	public ResponseEntity<JSONObject> getMinCreateMeet(String token) {
 		
 		JSONObject resultObj = new JSONObject(); 
-		
+		Long userId = commonUtil.getUserId(token);
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
-		for(Meeting meet : meetRepo.findByOwner(commonUtil.getUserId(token))) {
+		for(Meeting meet : meetRepo.findByOwner(userId)) {
 			
 		    MinMeetVo vo = MinMeetVo.builder()
 						.meet_id(meet.getId())
 						.title(meet.getTitle())
 						.max_people(meet.getMax_people())
 						.participant_count(meet.getParticipant_count())
+						.favorite_check(getFavorite(userId).contains(meet.getId()))
+						.join_list(getDetailViewUserList(meet.getId()))
 						.build();
 		    	
 		    if(meet.getMain_image_link() != null && !meet.getMain_image_link().equals("") )
@@ -785,9 +835,9 @@ public class PostServiceImpl implements PostService {
 	public ResponseEntity<JSONObject> getMinApplyMeet(String token) {
 		
 		JSONObject resultObj = new JSONObject(); 
-		
+		Long userId = commonUtil.getUserId(token);
 	    List<MinMeetVo> list = new ArrayList<MinMeetVo>();
-		for(Optional<MeetApplication> a : applyRepo.findByUserId(commonUtil.getUserId(token))) {
+		for(Optional<MeetApplication> a : applyRepo.findByUserId(userId)) {
 			
 			if(a.isPresent()) {
 			
@@ -799,6 +849,8 @@ public class PostServiceImpl implements PostService {
 						.title(meet.get().getTitle())
 						.max_people(meet.get().getMax_people())
 						.participant_count(meet.get().getParticipant_count())
+						.favorite_check(getFavorite(userId).contains(meet.get().getId()))
+						.join_list(getDetailViewUserList(meet.get().getId()))
 						.build();
 		    	
 		    	if(meet.get().getMain_image_link() != null && !meet.get().getMain_image_link().equals("") )
@@ -840,7 +892,6 @@ public class PostServiceImpl implements PostService {
 		}
 		
 		resultObj.put("content", manageUser);
-		
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 		
 	}
@@ -870,6 +921,7 @@ public class PostServiceImpl implements PostService {
 				
 				meet.get().decreaseParticipant_count();
 				meetRepo.save(meet.get());
+				updateMeetUser(meet.get().getId());
 				
 				resultObj.put("result", true);
 				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
@@ -879,8 +931,6 @@ public class PostServiceImpl implements PostService {
 				resultObj.put("reason", "요청 변수가 잘못 입력되었습니다.");
 				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 			}
-			
-
 			
 		}
 		resultObj.put("result", false);
@@ -908,11 +958,9 @@ public class PostServiceImpl implements PostService {
 				meetRepo.deleteById(meetId);
 				
 				resultObj.put("result", true);
-				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
-				
+				return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);	
 				
 			}
-			
 			
 		}
 		
@@ -941,14 +989,12 @@ public class PostServiceImpl implements PostService {
 					//participantRepo.deleteAllByMeetId(meetId);
 					meet.get().decreaseParticipant_count();
 					meetRepo.save(meet.get());
+					updateMeetUser(meet.get().getId());
 					resultObj.put("result", true);
 					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 				}
-				
-
 			}
 
-			
 		}
 		
 		resultObj.put("result", false);
@@ -979,7 +1025,6 @@ public class PostServiceImpl implements PostService {
 				}
 				
 			}
-			
 			
 		}
 		
