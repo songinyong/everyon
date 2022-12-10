@@ -81,23 +81,21 @@ public class PostController {
 	 //검색 API
 	 @GetMapping("/meet/search")
 	 public Page<MainMeetDto> searchMeet(@PageableDefault(size=10) Pageable pageRequest,@RequestParam("keyword") String keyword, @RequestParam("category") String category,  HttpServletRequest req) {
-	    	return postService.searchMeeting(pageRequest, keyword,category, req.getHeader("Authorization"));
-	    	
-	    	
+	        return postService.searchMeeting(pageRequest, keyword,category, req.getHeader("Authorization"));
+  	
 	 }
 	 
 	 //meet_id기준 세부 정보 검색
 	 @GetMapping("/meet/detailview/{meet_id}")
 	 public ResponseEntity<JSONObject> detailView(@PathVariable Long meet_id,HttpServletRequest req) {
-	    	return postService.getDetailMeeting(meet_id, req.getHeader("Authorization"));
-	    	
-	    	
+	        return postService.getDetailMeeting(meet_id, req.getHeader("Authorization"));
+	    		
 	 }	 
 	 
 	 //meet의 값 변경
 	 @PutMapping("/meet/update")
 	 public ResponseEntity<JSONObject> updateMeeting(@RequestBody UpdateMeetDto updateMeetDto, String token, HttpServletRequest req) {
-		 return postService.updateMeeting(updateMeetDto, req.getHeader("Authorization"));
+		     return postService.updateMeeting(updateMeetDto, req.getHeader("Authorization"));
 	 }
 	 
 	 //

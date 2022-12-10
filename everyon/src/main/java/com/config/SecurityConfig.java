@@ -35,13 +35,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .headers().frameOptions().disable()
-                .and().authorizeRequests()
+                /*.and().authorizeRequests()
                 .anyRequest().authenticated().and()
                 .addFilterBefore(new FirebaseTokenFilter(userDetailsService, firebaseAuth),
-                     UsernamePasswordAuthenticationFilter.class);
-         /*.and()
+                     UsernamePasswordAuthenticationFilter.class);*/
+         .and()
         .authorizeRequests().
-        anyRequest().permitAll();*/
+        anyRequest().permitAll();
     }
     
     //토큰 검증에서 제외대상

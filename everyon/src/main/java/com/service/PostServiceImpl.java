@@ -50,10 +50,10 @@ import com.domain.jpa.repository.log.ManageUserLogRepository;
 import com.util.CommonUtil;
 
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
 public class PostServiceImpl implements PostService {
-	
 	
 	private MeetRepository meetRepo ;
 	private ParticipantRepository participantRepo ;
@@ -71,6 +71,9 @@ public class PostServiceImpl implements PostService {
 	
 	//meet 아이디 기준 가입한 user들의 프로필 사진 캐시용
 	private HashMap<Long, List<Long>> MeetInUser = new HashMap<Long, List<Long>>();
+	
+	//meet 아이디 기준 현재 신청 대기중인 유저 아이디 캐시용
+	private HashMap<Long, List<Long>> ApplyUser = new HashMap<Long, List<Long>>();
 	
 
 	private CommonUtil commonUtil;
@@ -129,8 +132,98 @@ public class PostServiceImpl implements PostService {
 		this.endMeetLogRepo = endMeetLogRepository;
 	}
 	
+	
 	 /**
-	  * 메인화면에 출력되는 게시글 목록 
+	  * 세부화면에 출력되는 방 수정
+	  * 
+	  * 
+	  * */
+	//유저가 등록한 즐겨찾기 모음을 가져온다
+	private List<Long> getFavorite(Long user_id) {
+		if(usersFavorite.containsKey(user_id)) 
+			return usersFavorite.get(user_id);	
+		 else {
+			
+			addFavorite(user_id);
+			return usersFavorite.get(user_id);
+		}
+	}
+	
+	/*
+	 * 현재 캐쉬로 사용되는 해쉬맵에 추가
+	 * */
+	private void addFavorite(Long user_id) {
+		List<Long> result = new ArrayList<Long>();
+		
+		Iterator<Favorite> itr = favoriteRepo.findAllByUserId(user_id).stream().iterator();
+
+		
+		while(itr.hasNext()) {
+			result.add(itr.next().getMeetId());
+		}
+		usersFavorite.put(user_id, result);
+	}
+	
+	/**
+	 * 모임의 프로필 사진 모음
+	 */
+	private void updateMeetUser(Long meet_id) {
+		List<Long> result = new ArrayList<Long>();
+		
+		Iterator<Participant> itr = participantRepo.findByMeetId(meet_id).stream().iterator();
+		
+		while(itr.hasNext()) {
+			result.add(itr.next().getUserId());
+		}
+		MeetInUser.put(meet_id, result);
+		
+	}
+	
+	//모임에 가입한 유저들의 프로필 사진들을 가져온다
+	private List<Long> getMeetUser(Long meet_id) {
+		if(MeetInUser.containsKey(meet_id)) 
+			return MeetInUser.get(meet_id);	
+		 else {
+			
+			 updateMeetUser(meet_id);
+			return MeetInUser.get(meet_id);
+		}
+	}
+	
+	/**
+	 * 모임의 프로필 사진 모음
+	 */
+	private void updateApplyList(Long meet_id) {
+		List<Long> result = new ArrayList<Long>();
+		
+		Iterator<MeetApplication> itr = applyRepo.findByMeetId(meet_id).stream().iterator();
+		
+		while(itr.hasNext()) {
+			result.add(itr.next().getUserId());
+		}
+		ApplyUser.put(meet_id, result);
+		
+	}
+	
+	/*
+	 * 모임 아이디 기준 신청한 유저 아이디 목록을 알려줌
+	 */
+	private List<Long> getApplyList(Long meet_id) {
+		
+		if(ApplyUser.containsKey(meet_id)) 
+			return ApplyUser.get(meet_id);	
+		 else {
+			
+			 updateApplyList(meet_id);
+			return ApplyUser.get(meet_id);
+		}
+		
+	}
+	
+	 /**
+	  * 메인화면에 출력되는 게시글 목록
+	  * 
+	  *  결과: 메인화면 MainMeetDto
 	  * */
 	@Transactional
     public Page<MainMeetDto> findAllMeeting(Pageable pageRequest, String token) {
@@ -142,6 +235,7 @@ public class PostServiceImpl implements PostService {
 		 
 		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
 		 dtoList.stream().filter(d -> d.getOwner().equals(userId)).forEach(d -> d.setOwnerCheck());
+		 dtoList.stream().filter(d -> getApplyList(d.getMeet_id()).contains(userId)).forEach(d -> d.setApplyCheck());
 		 dtoList.stream().filter(d -> getMeetUser(d.getMeet_id()).contains(userId)).forEach(d -> d.setJoinCheck());
   
 		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); } );
@@ -151,6 +245,8 @@ public class PostServiceImpl implements PostService {
 
 	 /**
 	  * 메인화면에 출력되는 카테고리 기준 게시글 목록 
+	  * 
+	  * 결과: 메인화면 MainMeetDto
 	  * */
 	@Transactional
     public Page<MainMeetDto> findCategoryMeeting(Pageable pageRequest, String category, String token) {
@@ -162,11 +258,59 @@ public class PostServiceImpl implements PostService {
 		 
 		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
 		 dtoList.stream().filter(d -> d.getOwner().equals(userId)).forEach(d -> d.setOwnerCheck());
+		 dtoList.stream().filter(d -> getApplyList(d.getMeet_id()).contains(userId)).forEach(d -> d.setApplyCheck());
 		 dtoList.stream().filter(d -> getMeetUser(d.getMeet_id()).contains(userId)).forEach(d -> d.setJoinCheck());
  
 		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
    	return dtoList;
    }
+	
+	/**
+	 * 통합검색
+	 * 파라미터: keyword:url, category_code:body
+	 * 결과: 메인화면 MainMeetDto
+	 * */
+	@Transactional
+    public Page<MainMeetDto> searchMeeting(Pageable pageRequest, String keyword, String category,  String token) {
+		Page<Meeting> meetList;
+		 if(!keyword.equals(" ") && !category.equals(" "))
+		     meetList = meetRepo.findStoreByKeywordAndCategory(pageRequest, keyword, category);
+		 else if(keyword.equals(" ") && !category.equals(" "))
+			 meetList = meetRepo.findMeetingByCategory(pageRequest, category);
+		 else if(!keyword.equals(" ") && category.equals(" ") )
+			 meetList = meetRepo.findStoreByKeyword(pageRequest, keyword);
+		 else
+			 meetList = meetRepo.findAll(pageRequest);
+		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
+		 
+		 Long userId = commonUtil.getUserId(token);
+		 
+		 List<Long> fv =  getFavorite(userId);
+		 
+		 dtoList.stream().filter(d -> d.getOwner().equals(userId)).forEach(d -> d.setOwnerCheck());
+		 dtoList.stream().filter(d -> getMeetUser(d.getMeet_id()).contains(userId)).forEach(d -> d.setJoinCheck());
+		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
+		 dtoList.stream().filter(d -> getApplyList(d.getMeet_id()).contains(userId)).forEach(d -> d.setApplyCheck());
+		 
+		 
+		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
+   	return dtoList;
+   }	
+	
+	
+	private List<DetailViewUserVo> getDetailViewUserList(Long meet_id) {
+    	List<DetailViewUserVo> detailUser = new ArrayList<DetailViewUserVo>();
+		for(Long u : getMeetUser(meet_id)) {
+			Optional<CustomUser> user = userRepo.findById(u);
+			
+			if(user.isPresent())
+			detailUser.add(DetailViewUserVo.builder()
+					.image(commonUtil.getImageLink(user.get().getImage()))
+					.nickname(user.get().getNickname())
+					.user_id(u).build());
+		}
+		return detailUser;
+	}
 	
 	 /**
 	  * 세부화면에 출력되는 방 정보
@@ -282,72 +426,12 @@ public class PostServiceImpl implements PostService {
 		    
 		}
 		
-		
-		
 		resultObj.put("result","true");
 		
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
 		
 	}
 	
-	
-	
-	 /**
-	  * 세부화면에 출력되는 방 수정
-	  * 
-	  * 
-	  * */
-	//유저가 등록한 즐겨찾기 모음을 가져온다
-	private List<Long> getFavorite(Long user_id) {
-		if(usersFavorite.containsKey(user_id)) 
-			return usersFavorite.get(user_id);	
-		 else {
-			
-			addFavorite(user_id);
-			return usersFavorite.get(user_id);
-		}
-	}
-	
-	/*
-	 * 현재 캐쉬로 사용되는 해쉬맵에 추가
-	 * */
-	private void addFavorite(Long user_id) {
-		List<Long> result = new ArrayList<Long>();
-		
-		Iterator<Favorite> itr = favoriteRepo.findAllByUserId(user_id).stream().iterator();
-
-		
-		while(itr.hasNext()) {
-			result.add(itr.next().getMeetId());
-		}
-		usersFavorite.put(user_id, result);
-	}
-	
-	/**
-	 * 모임의 프로필 사진 모음
-	 */
-	private void updateMeetUser(Long meet_id) {
-		List<Long> result = new ArrayList<Long>();
-		
-		Iterator<Participant> itr = participantRepo.findByMeetId(meet_id).stream().iterator();
-		
-		while(itr.hasNext()) {
-			result.add(itr.next().getUserId());
-		}
-		MeetInUser.put(meet_id, result);
-		
-	}
-	
-	//모임에 가입한 유저들의 프로필 사진들을 가져온다
-	private List<Long> getMeetUser(Long meet_id) {
-		if(MeetInUser.containsKey(meet_id)) 
-			return MeetInUser.get(meet_id);	
-		 else {
-			
-			 updateMeetUser(meet_id);
-			return MeetInUser.get(meet_id);
-		}
-	}
 	
 	//유저 아이디로 이미지 사진 가져와 반환
 	private List<String> getUploadUserImages(Long meet_id) {
@@ -490,20 +574,20 @@ public class PostServiceImpl implements PostService {
 				meetRepo.save(meet.get());
 				
 				updateMeetUser(meet.get().getId());
+				updateApplyList(meet.get().getId());
 				
 		    }
 			else if(meet.get().getRoom_code().equals("per")) {
 				applyDto.setUserId(user_id);
 				applyRepo.save(applyDto.toEntity());
+				updateApplyList(meet.get().getId());
 			}
 			
 			//후에 방 코드가 추가된다면 여기
 			else {
 				
 			}
-			
-			
-			
+
 		}
 		else {
 			
@@ -596,9 +680,27 @@ public class PostServiceImpl implements PostService {
 					meet.get().increateParticipant_count();
 					meetRepo.save(meet.get());
 					updateMeetUser(meet.get().getId());
+					updateApplyList(meet.get().getId());
 					
 					resultObj.put("result","true");
 					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+				}
+				else if(!applyDto.isAppr() && !checkOwnerInMeet(apply.get().getUserId(), apply.get().getMeetId())) {
+					
+					applyLogRepo.save(ApplyLog.builder()
+							.appr(applyDto.isAppr())
+							.meet_id(apply.get().getMeetId())
+							.userId(apply.get().getUserId())
+							.refusalDec(applyDto.getRefusalDec())
+							.build());
+					
+					//신청 완료된건 삭제
+					applyRepo.deleteById(apply.get().getId());
+					updateApplyList(meet.get().getId());
+					
+					resultObj.put("result","true");
+					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+					
 				}
 				
 			}
@@ -642,44 +744,7 @@ public class PostServiceImpl implements PostService {
 		return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 			
 	}
-	/**
-	 * 통합검색
-	 * 파라미터: keyword:url, category_code:body
-	 * */
-	@Transactional
-    public Page<MainMeetDto> searchMeeting(Pageable pageRequest, String keyword, String category,  String token) {
-		Page<Meeting> meetList;
-		 if(!keyword.equals(" ") && !category.equals(" "))
-		     meetList = meetRepo.findStoreByKeywordAndCategory(pageRequest, keyword, category);
-		 else if(keyword.equals(" ") && !category.equals(" "))
-			 meetList = meetRepo.findMeetingByCategory(pageRequest, category);
-		 else if(!keyword.equals(" ") && category.equals(" ") )
-			 meetList = meetRepo.findStoreByKeyword(pageRequest, keyword);
-		 else
-			 meetList = meetRepo.findAll(pageRequest);
-		 Page<MainMeetDto> dtoList = meetList.map(MainMeetDto::new);
-		 
-		 List<Long> fv =  getFavorite(commonUtil.getUserId(token));
-		 
-		 dtoList.stream().filter(d -> fv.contains(d.getMeet_id())).forEach(d -> d.setFavorite());
-		 dtoList.stream().forEach(m -> {m.setUserImages(getUploadUserImages(m.getMeet_id())); m.setMainImage(commonUtil.getImageLink(m.getMain_image())); }  );
-   	return dtoList;
-   }	
-	
-	
-	private List<DetailViewUserVo> getDetailViewUserList(Long meet_id) {
-    	List<DetailViewUserVo> detailUser = new ArrayList<DetailViewUserVo>();
-		for(Long u : getMeetUser(meet_id)) {
-			Optional<CustomUser> user = userRepo.findById(u);
-			
-			if(user.isPresent())
-			detailUser.add(DetailViewUserVo.builder()
-					.image(commonUtil.getImageLink(user.get().getImage()))
-					.nickname(user.get().getNickname())
-					.user_id(u).build());
-		}
-		return detailUser;
-	}
+
 	
     /**
      * 즐겨찾기한 모임 검색
@@ -1017,8 +1082,8 @@ public class PostServiceImpl implements PostService {
 				
 				if(apply.get(0).isPresent()) {
 				
-
 					applyRepo.delete(apply.get(0).get());
+					updateApplyList(meet.get().getId());
 					resultObj.put("result", true);
 					return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
 				
