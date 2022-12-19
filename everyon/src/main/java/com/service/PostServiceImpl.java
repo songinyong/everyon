@@ -562,7 +562,7 @@ public class PostServiceImpl implements PostService {
 			return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
 		}
 		
-		if(applyRepo.findByUserIdAndMeetId(user_id, applyDto.getMeet_id()).isEmpty()) {
+		if(applyRepo.findByUserIdAndMeetId(user_id, applyDto.getMeet_id()).isEmpty() && participantRepo.findByUserIdAndMeetId(user_id, applyDto.getMeet_id()).isEmpty()) {
 			
 			if(meet.get().getRoom_code().equals("pub")) {
 				participantRepo.save(Participant.builder()
@@ -617,12 +617,17 @@ public class PostServiceImpl implements PostService {
 		if(meet.isPresent()) {
 			if(meet.get().getOwner().equals(commonUtil.getUserId(token))) {
 				for(MeetApplication m : applyRepo.findByMeetId(meet_id)) {
+					
+					Optional<CustomUser> user = userRepo.findById(m.getUserId());
+					if(user.isPresent())
 					list.add(DecideApplyVo.builder()
 							.apply_id(m.getId())
 							.meet_id(meet_id)
 							.createdTime(m.getCreatedDate())
 							.user_id(m.getUserId())
 							.description(m.getDescription())
+							.name(user.get().getNickname())
+							.image_link(commonUtil.getImageLink(user.get().getImage()))
 							.build());
 				}
 				
