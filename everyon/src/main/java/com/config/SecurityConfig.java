@@ -39,7 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated().and()
                 .addFilterBefore(new FirebaseTokenFilter(userDetailsService, firebaseAuth),
                      UsernamePasswordAuthenticationFilter.class);
-        /* .and()
+         /*.and()
         .authorizeRequests().
         anyRequest().permitAll();*/
     }
@@ -51,6 +51,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
          * 회원가입이후에 다른 
          */
 			web.ignoring().antMatchers(HttpMethod.POST, "/users/register")
-            .antMatchers("/image/**");
+			.antMatchers(HttpMethod.GET, "/")
+            .antMatchers("/images/**")
+            .antMatchers("/assets/**")
+            .antMatchers("/*.html")
+            .antMatchers("/resources/**");
     }
 }
