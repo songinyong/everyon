@@ -119,6 +119,9 @@ public class CommonUtil {
 	 */
 	public String getImageLink(String img_id) {
 		
-		return "https://dx-sprint.s3.ap-northeast-2.amazonaws.com/" + img_id ;
+		if(img_id != null)
+		    return "https://dx-sprint.s3.ap-northeast-2.amazonaws.com/" + img_id ;
+		else
+			return "https://dx-sprint.s3.ap-northeast-2.amazonaws.com/" + "null.png" ;
 	}
 }

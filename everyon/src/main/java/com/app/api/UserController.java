@@ -37,6 +37,13 @@ public class UserController {
 
 		return userService.register(registerInfo.getUid(), registerInfo.getPlatform(),  req.getHeader("Authorization"));
 	}
+	
+	@PostMapping("/userout")
+	public ResponseEntity<JSONObject> userOut(HttpServletRequest req) {
+		
+
+		return userService.out(req.getHeader("Authorization"));
+	}
 	@PutMapping("/imageupload")
 	public ResponseEntity<JSONObject> uploadImage(@RequestBody UploadImageDto image, HttpServletRequest req) {
 		

@@ -57,6 +57,7 @@ public class CustomUserService implements UserDetailsService {
     }
     /*
      * 회원가입
+     * 23.01.11 탈퇴 처리 회원일 경우 메시지 추가 
      * */
     public ResponseEntity<JSONObject> register(String uid, String platform, String token) {
     	
@@ -84,8 +85,8 @@ public class CustomUserService implements UserDetailsService {
     			resultObj.put("reason", "잘못된 요청입니다");
     		}
     		
-    		
-    		if(userRepository.findByUidAndPlatform(uid, platform).isEmpty()) {
+    		Optional<CustomUser> user = userRepository.findByUidAndPlatform(uid, platform);
+    		if(user.isEmpty() ) {
         		register(uid, platform);
         		resultObj.put("result", true);
     		}
@@ -93,8 +94,14 @@ public class CustomUserService implements UserDetailsService {
     		
     		else {
     			
-    			resultObj.put("result", false);
-    			resultObj.put("reason", "중복된 회원이 존재합니다");
+    			if(user.get().getAuth().equals("OUT")) {
+        			resultObj.put("result", false);
+        			resultObj.put("reason", "탈퇴 처리된 회원입니다");
+    			}
+    			else {
+	    			resultObj.put("result", false);
+	    			resultObj.put("reason", "중복된 회원이 존재합니다");
+    			}
     		}
     		
     		
@@ -111,6 +118,47 @@ public class CustomUserService implements UserDetailsService {
     	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.CREATED);
     }
     
+    /*
+     * 회원탈퇴
+     * 23.01.11 최초 작성
+     * */
+    public ResponseEntity<JSONObject> out(String token) {
+        FirebaseToken decodedToken;
+        JSONObject resultObj = new JSONObject();
+        
+        
+        try{
+            
+            decodedToken = firebaseAuth.verifyIdToken(RequestUtil.getAuthorizationToken(token));
+            
+        } catch (NullPointerException | FirebaseAuthException | IllegalArgumentException e) {
+        	
+        	
+        	resultObj.put("result", false);
+        	resultObj.put("reason", e);
+        	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+        }
+        
+        try {
+        	CustomUser user = userRepository.findByUid(decodedToken.getUid());
+        	if(user !=null) {
+        		
+        		if(!user.getAuth().equals("OUT")) {
+	        		user.setAuth("OUT");
+	        		userRepository.save(user);
+	            	resultObj.put("result", true);
+	            	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.OK);
+        		}
+        	};
+        	
+        } catch (Exception e) {
+
+        }
+        
+    	resultObj.put("result", false);
+    	return new ResponseEntity<JSONObject>(resultObj, HttpStatus.BAD_REQUEST);
+        
+    }
     
     /**
      * 유저 프로필 사진 업데이트
